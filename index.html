@@ -17,7 +17,7 @@
       font-family: 'Arial', sans-serif;
       overflow-x: hidden;
       scroll-behavior: smooth;
-      background-color: #f8f9fa; /* 기본 배경색을 연한 회색으로 설정 (섹션 배경과 구분) */
+      background-color: #f8f9fa;
     }
 
     /* 헤더 스타일 */
@@ -58,58 +58,65 @@
       color: #667eea;
     }
 
-    /* 홈 섹션 (배경 영상 포함) */
+    /* 홈 섹션 */
     #home {
-      position: relative; /* 자식 요소의 absolute 위치 기준 */
-      height: 100vh; /* 뷰포트 전체 높이 */
-      overflow: hidden; /* 영상이 섹션 밖으로 나가지 않도록 숨김 */
+      position: relative;
+      height: 100vh;
+      overflow: hidden;
+      color: white;
+      text-align: center;
+      padding: 0 20px;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      color: white; /* 홈 섹션 텍스트 색상 */
-      text-align: center;
       text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
-      padding: 0 20px;
     }
 
-    /* Vimeo 배경 영상 iframe 스타일 (홈 섹션 내부에 위치) */
-    #home .background-video {
+    /* 16:9 비율 유지하는 래퍼 */
+    #home .video-wrapper {
       position: absolute;
       top: 50%;
       left: 50%;
-      min-width: 100%; /* 최소 너비를 부모의 100%로 설정 */
-      min-height: 100%; /* 최소 높이를 부모의 100%로 설정 */
-      width: auto; /* 자연스러운 비율 유지 */
-      height: auto; /* 자연스러운 비율 유지 */
-      transform: translate(-50%, -50%); /* 중앙 정렬 */
-      z-index: -1; /* 홈 섹션 콘텐츠 뒤에 위치 */
+      width: 177.77vh; /* 100vh * 16/9 */
+      height: 100vh;
+      transform: translate(-50%, -50%);
+      overflow: hidden;
+      z-index: -1;
       pointer-events: none;
-      border: none;
-      /* object-fit: cover; 는 iframe에서 동작이 불안정할 수 있어 위 속성들로 대체 */
     }
 
-    /* 어두운 오버레이 (홈 섹션 내부에 위치) */
+    #home .video-wrapper iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      border: none;
+    }
+
+    /* 어두운 오버레이 */
     #home .overlay {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.4);
-      z-index: 0; /* 영상과 콘텐츠 사이에 위치 */
+      background: rgba(0,0,0,0.4);
+      z-index: 0;
     }
 
-    /* 홈 섹션 콘텐츠 (hero-content) */
+    /* 홈 콘텐츠 */
     .hero-content h1 {
       font-size: 4rem;
       font-weight: bold;
-      margin-bottom: 0.5rem;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
     }
 
     .hero-content p {
-      font-size: 1.5rem;
-      margin-bottom: 2rem;
+      display: none; /* "창의적인 영상 제작 & 모션 디자인" 문구 제거 */
     }
 
     .cta-button {
@@ -122,6 +129,7 @@
       text-decoration: none;
       transition: background 0.3s ease, color 0.3s ease;
       backdrop-filter: blur(10px);
+      text-shadow: none; /* 텍스트 그림자 제거 */
     }
 
     .cta-button:hover {
@@ -134,19 +142,13 @@
     section {
       padding: 100px 20px;
       max-width: 1200px;
-      margin: 0 auto;
-      background-color: white; /* 모든 섹션의 배경을 흰색으로 설정 */
-      box-shadow: 0 0 20px rgba(0,0,0,0.05); /* 섹션에 그림자 추가 */
-      margin-bottom: 40px; /* 섹션 간 간격 */
-      border-radius: 10px; /* 섹션 모서리 둥글게 */
-    }
-    
-    /* 첫 번째 섹션 (홈 섹션 다음)의 상단 마진 조정 */
-    #skills {
-        margin-top: 40px; /* 홈 섹션과의 간격 */
+      margin: 0 auto 40px auto;
+      background-color: white;
+      box-shadow: 0 0 20px rgba(0,0,0,0.05);
+      border-radius: 10px;
     }
 
-
+    /* 기술 스택 */
     .section-title {
       font-size: 3rem;
       text-align: center;
@@ -167,7 +169,6 @@
       border-radius: 2px;
     }
 
-    /* 기술 스택 */
     .skills-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -320,11 +321,11 @@
 
     /* 푸터 */
     footer {
-        background: #333;
-        color: white;
-        text-align: center;
-        padding: 2rem 0;
-        margin-top: 40px; /* 마지막 섹션과의 간격 */
+      background: #333;
+      color: white;
+      text-align: center;
+      padding: 2rem 0;
+      margin-top: 40px;
     }
 
     /* 반응형 */
@@ -333,7 +334,7 @@
         font-size: 2.5rem;
       }
       .hero-content p {
-        font-size: 1.2rem;
+        display: none;
       }
       nav ul {
         gap: 1rem;
@@ -362,22 +363,20 @@
 
   <!-- 홈 섹션 -->
   <section id="home">
-    <!-- Vimeo 배경 영상 iframe -->
-    <iframe
-      class="background-video"
-      src="https://player.vimeo.com/video/1095588389?background=1&autoplay=1&loop=1&muted=1&playsinline=1"
-      allow="autoplay; fullscreen; picture-in-picture"
-      allowfullscreen
-      title="HANTURI Portfolio Background Video"
-    ></iframe>
+    <div class="video-wrapper">
+      <iframe
+        src="https://player.vimeo.com/video/1095588389?background=1&autoplay=1&loop=1&muted=1&playsinline=1"
+        frameborder="0"
+        allow="autoplay; fullscreen; picture-in-picture"
+        allowfullscreen
+        title="HANTURI Portfolio Background Video"
+      ></iframe>
+    </div>
 
-    <!-- 어두운 오버레이 -->
     <div class="overlay"></div>
 
-    <!-- 홈 섹션 콘텐츠 -->
     <div class="hero-content">
       <h1>HANTURI PORTFOLIO</h1>
-      <p>창의적인 영상 제작 & 모션 디자인</p>
       <a href="#skills" class="cta-button">포트폴리오 보기</a>
     </div>
   </section>
@@ -424,7 +423,6 @@
           </div>
         </div>
       </div>
-      <!-- "개인 포트폴리오 웹사이트" 프로젝트는 제거되었습니다. -->
     </div>
   </section>
 
@@ -452,7 +450,7 @@
 
   <footer>
     <div class="container">
-        <p>&copy; 2025 HANTURI. All rights reserved.</p>
+      <p>&copy; 2025 HANTURI. All rights reserved.</p>
     </div>
   </footer>
 </body>

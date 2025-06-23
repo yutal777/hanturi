@@ -19,6 +19,16 @@
       scroll-behavior: smooth;
     }
 
+    /* 기본적으로 body 배경을 흰색으로 설정 */
+    body {
+      background-color: white;
+    }
+
+    /* 홈 섹션 활성화 시 body 배경을 투명하게 하여 영상이 보이도록 함 */
+    body.home-active {
+      background-color: transparent;
+    }
+
     /* 배경 영상 iframe 스타일 (홈 섹션에만 적용) */
     .background-video {
       position: fixed;
@@ -106,11 +116,6 @@
       padding: 0 20px;
     }
     
-    /* 홈 섹션 외에는 흰색 배경 */
-    section:not(#home) {
-      background-color: white;
-    }
-
     .hero-content h1 {
       font-size: 4rem;
       font-weight: bold;
@@ -146,6 +151,7 @@
       padding: 100px 20px;
       max-width: 1200px;
       margin: 0 auto;
+      /* 섹션 자체는 배경색을 가질 필요 없음. body가 배경을 제어 */
     }
 
     .section-title {
@@ -430,10 +436,6 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const homeSection = document.getElementById('home');
-      const backgroundVideo = document.querySelector('.background-video');
-      const overlay = document.querySelector('.overlay');
-
       function toggleBackground() {
         if (window.location.hash === '#home' || window.location.hash === '') {
           document.body.classList.add('home-active');
@@ -451,7 +453,8 @@
       // 네비게이션 링크 클릭 시 확인
       document.querySelectorAll('nav ul li a').forEach(link => {
         link.addEventListener('click', function() {
-          setTimeout(toggleBackground, 100); // 스크롤 후 해시가 변경될 시간을 줌
+          // 클릭 즉시 변경이 아닌, 해시 변경 감지를 위해 약간의 지연을 줌
+          setTimeout(toggleBackground, 100); 
         });
       });
     });

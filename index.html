@@ -76,14 +76,17 @@
     /* Vimeo 배경 영상 iframe 스타일 (홈 섹션 내부에 위치) */
     #home .background-video {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 50%;
+      left: 50%;
+      min-width: 100%; /* 최소 너비를 부모의 100%로 설정 */
+      min-height: 100%; /* 최소 높이를 부모의 100%로 설정 */
+      width: auto; /* 자연스러운 비율 유지 */
+      height: auto; /* 자연스러운 비율 유지 */
+      transform: translate(-50%, -50%); /* 중앙 정렬 */
       z-index: -1; /* 홈 섹션 콘텐츠 뒤에 위치 */
       pointer-events: none;
       border: none;
-      object-fit: cover; /* 영상이 섹션을 꽉 채우도록 */
+      /* object-fit: cover; 는 iframe에서 동작이 불안정할 수 있어 위 속성들로 대체 */
     }
 
     /* 어두운 오버레이 (홈 섹션 내부에 위치) */
@@ -421,22 +424,7 @@
           </div>
         </div>
       </div>
-      <!-- 추가 프로젝트는 여기에 더 넣으시면 됩니다 -->
-      <div class="project-card">
-        <div class="project-image">포트폴리오 웹사이트 디자인</div>
-        <div class="project-content">
-          <h3 class="project-title">개인 포트폴리오 웹사이트</h3>
-          <p class="project-description">HTML, CSS를 활용하여 개인 포트폴리오 웹사이트를 디자인하고 개발했습니다.</p>
-          <div class="project-tech">
-            <span class="tech-tag">HTML</span>
-            <span class="tech-tag">CSS</span>
-            <span class="tech-tag">Vercel</span>
-          </div>
-          <div class="project-links">
-            <a href="#" target="_blank" class="project-link" rel="noopener noreferrer">사이트 보기</a>
-          </div>
-        </div>
-      </div>
+      <!-- "개인 포트폴리오 웹사이트" 프로젝트는 제거되었습니다. -->
     </div>
   </section>
 

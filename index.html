@@ -17,7 +17,7 @@
       font-family: 'Arial', sans-serif;
       overflow-x: hidden;
       scroll-behavior: smooth;
-      background-color: white; /* 모든 페이지의 기본 배경을 흰색으로 고정 */
+      background-color: white;
     }
 
     /* 배경 영상 iframe 스타일 */
@@ -25,44 +25,37 @@
       position: fixed;
       top: 50%;
       left: 50%;
-      width: 100vw;
+      width: 177.77vh; /* 100vh * 16/9 */
       height: 100vh;
       transform: translate(-50%, -50%);
       z-index: -1;
+      pointer-events: none;
       border: none;
-      
-      /* opacity와 pointer-events로 가시성 제어, display: none 대신 */
-      opacity: 0; 
-      pointer-events: none; /* 클릭 이벤트 등 비활성화 */
-      transition: opacity 0.8s ease; /* 부드러운 전환 효과 추가 */
-      
-      object-fit: cover; /* 영상이 잘리지 않고 꽉 차게 화면에 맞춤 */
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      display: block;
     }
 
-    body.home-active .background-video {
-      opacity: 1; /* 홈 섹션 활성화 시 완전히 보이도록 */
-      pointer-events: auto; /* 상호작용 가능하게 (필요에 따라 none 유지 가능) */
-    }
-
-    /* 영상 위 오버레이 (어둡게) */
+    /* 오버레이 스타일 */
     .overlay {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(0,0,0,0.4);
       z-index: 0;
-      
-      /* opacity와 pointer-events로 가시성 제어, display: none 대신 */
       opacity: 0;
-      pointer-events: none; /* 클릭 이벤트 등 비활성화 */
-      transition: opacity 0.8s ease; /* 부드러운 전환 효과 추가 */
+      transition: opacity 0.5s ease;
+      pointer-events: none;
+      display: block;
     }
 
+    /* 홈 페이지일 때만 보이도록 */
+    body.home-active .background-video,
     body.home-active .overlay {
-      opacity: 1; /* 홈 섹션 활성화 시 완전히 보이도록 */
-      pointer-events: auto; /* 상호작용 가능하게 */
+      opacity: 1;
+      pointer-events: auto;
     }
 
     /* 헤더 스타일 */
@@ -103,26 +96,32 @@
       color: #667eea;
     }
 
-    /* 메인 콘텐츠 영역 (홈 섹션) */
-    .hero-content {
+    /* 홈 섹션 */
+    #home {
       position: relative;
-      z-index: 1;
       height: 100vh;
+      overflow: hidden;
+      color: white;
+      text-align: center;
+      padding: 0 20px;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      color: white;
-      text-align: center;
       text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
-      padding: 0 20px;
-      background-color: transparent; /* 홈 섹션의 배경은 항상 투명하게 유지 */
+      z-index: 1;
     }
-    
+
+    /* 홈 콘텐츠 */
     .hero-content h1 {
       font-size: 4rem;
       font-weight: bold;
-      margin-bottom: 0.5rem;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+    }
+
+    .hero-content p {
+      display: none; /* 문구 제거 */
     }
 
     .cta-button {
@@ -135,7 +134,7 @@
       text-decoration: none;
       transition: background 0.3s ease, color 0.3s ease;
       backdrop-filter: blur(10px);
-      text-shadow: none; /* 포트폴리오 보기 텍스트 그림자 제거 */
+      text-shadow: none; /* 그림자 제거 */
     }
 
     .cta-button:hover {
@@ -148,8 +147,12 @@
     section {
       padding: 100px 20px;
       max-width: 1200px;
-      margin: 0 auto;
-      background-color: white; /* 모든 섹션에 흰색 배경을 강제 적용 */
+      margin: 0 auto 40px auto;
+      background-color: white;
+      box-shadow: 0 0 20px rgba(0,0,0,0.05);
+      border-radius: 10px;
+      position: relative;
+      z-index: 1;
     }
 
     .section-title {
@@ -323,19 +326,28 @@
       margin-right: auto;
     }
 
+    /* 푸터 */
+    footer {
+      background: #333;
+      color: white;
+      text-align: center;
+      padding: 2rem 0;
+      margin-top: 40px;
+    }
+
     /* 반응형 */
     @media (max-width: 768px) {
       .hero-content h1 {
         font-size: 2.5rem;
-      }
-      .cta-button {
-        padding: 10px 25px;
       }
       nav ul {
         gap: 1rem;
       }
       .skills-grid, .projects-grid, .contact-info {
         grid-template-columns: 1fr;
+      }
+      .section-title {
+        font-size: 2.5rem;
       }
     }
   </style>
@@ -353,21 +365,25 @@
     </nav>
   </header>
 
+  <!-- Vimeo 배경 영상 -->
   <iframe
     class="background-video"
-    src="https://player.vimeo.com/video/1095588389?autoplay=1&loop=1&autopause=0&muted=1&background=1&playsinline=1&badge=0&player_id=0&app_id=58479"
-    allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+    src="https://player.vimeo.com/video/1095588389?background=1&autoplay=1&loop=1&muted=1&playsinline=1"
+    allow="autoplay; fullscreen; picture-in-picture"
     allowfullscreen
     title="HANTURI Portfolio Background Video"
   ></iframe>
 
+  <!-- 어두운 오버레이 -->
   <div class="overlay"></div>
 
+  <!-- 홈 섹션 -->
   <section id="home" class="hero-content">
     <h1>HANTURI PORTFOLIO</h1>
     <a href="#skills" class="cta-button">포트폴리오 보기</a>
   </section>
 
+  <!-- 기술 스택 섹션 -->
   <section id="skills">
     <h2 class="section-title">기술 스택</h2>
     <div class="skills-grid">
@@ -390,6 +406,7 @@
     </div>
   </section>
 
+  <!-- 프로젝트 섹션 -->
   <section id="projects">
     <h2 class="section-title">프로젝트</h2>
     <div class="projects-grid">
@@ -404,13 +421,14 @@
             <span class="tech-tag">Photoshop</span>
           </div>
           <div class="project-links">
-            <a href="https://www.notion.so/21ba4a73a0d38074a1e1df8708e41f9d?source=copy_link" target="_blank" rel="noopener noreferrer">프로젝트 보기</a>
+            <a href="https://www.notion.so/21ba4a73a0d38074a1e1df8708e41f9d?source=copy_link" target="_blank" class="project-link" rel="noopener noreferrer">프로젝트 보기</a>
           </div>
         </div>
       </div>
     </div>
   </section>
 
+  <!-- 연락처 섹션 -->
   <section id="contact">
     <h2 class="section-title">연락처</h2>
     <div class="contact-info">
@@ -432,17 +450,27 @@
     </div>
   </section>
 
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 HANTURI. All rights reserved.</p>
+    </div>
+  </footer>
+
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const homeSection = document.getElementById('home');
       const body = document.body;
+      const backgroundVideo = document.querySelector('.background-video');
+      const overlay = document.querySelector('.overlay');
 
+      // Intersection Observer 옵션
       const observerOptions = {
-        root: null, 
+        root: null,
         rootMargin: '0px',
-        threshold: 0.5 
+        threshold: 0.5
       };
 
+      // 홈 섹션 관찰자 생성
       const homeObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.target.id === 'home') {
@@ -459,19 +487,17 @@
         homeObserver.observe(homeSection);
       }
 
-      // 초기 로드 시 home-active 클래스 설정
-      // 브라우저 캐시 등으로 인해 Intersection Observer가 즉시 발동하지 않을 수 있으므로,
-      // 초기 상태를 명확히 설정합니다.
+      // 초기 로드 시 상태 설정
       if (window.location.hash === '#home' || window.location.hash === '') {
         body.classList.add('home-active');
       } else {
         body.classList.remove('home-active');
       }
-      
-      // 네비게이션 링크 클릭 시 스크롤 후 배경 변경 로직
+
+      // 네비게이션 링크 클릭 시 스크롤 및 상태 변경
       document.querySelectorAll('nav ul li a').forEach(link => {
         link.addEventListener('click', function(e) {
-          e.preventDefault(); 
+          e.preventDefault();
           const targetId = this.getAttribute('href');
           const targetSection = document.querySelector(targetId);
 
@@ -479,13 +505,13 @@
             targetSection.scrollIntoView({ behavior: 'smooth' });
 
             setTimeout(() => {
-              window.location.hash = targetId; 
+              window.location.hash = targetId;
               if (targetId === '#home') {
                 body.classList.add('home-active');
               } else {
                 body.classList.remove('home-active');
               }
-            }, 800); 
+            }, 800);
           }
         });
       });

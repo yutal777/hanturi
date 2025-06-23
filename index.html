@@ -17,30 +17,7 @@
       font-family: 'Arial', sans-serif;
       overflow-x: hidden;
       scroll-behavior: smooth;
-    }
-
-    /* 배경 영상 iframe 스타일 */
-    .background-video {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      width: 100vw;
-      height: 100vh;
-      transform: translate(-50%, -50%);
-      z-index: -1;
-      pointer-events: none;
-      border: none;
-    }
-
-    /* 영상 위 오버레이 (어둡게) */
-    .overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.4);
-      z-index: 0;
+      background-color: #f8f9fa; /* 기본 배경색을 연한 회색으로 설정 (섹션 배경과 구분) */
     }
 
     /* 헤더 스타일 */
@@ -81,21 +58,46 @@
       color: #667eea;
     }
 
-    /* 메인 콘텐츠 영역 */
-    .hero-content {
-      position: relative;
-      z-index: 1;
-      height: 100vh;
+    /* 홈 섹션 (배경 영상 포함) */
+    #home {
+      position: relative; /* 자식 요소의 absolute 위치 기준 */
+      height: 100vh; /* 뷰포트 전체 높이 */
+      overflow: hidden; /* 영상이 섹션 밖으로 나가지 않도록 숨김 */
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      color: white;
+      color: white; /* 홈 섹션 텍스트 색상 */
       text-align: center;
       text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
       padding: 0 20px;
     }
 
+    /* Vimeo 배경 영상 iframe 스타일 (홈 섹션 내부에 위치) */
+    #home .background-video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1; /* 홈 섹션 콘텐츠 뒤에 위치 */
+      pointer-events: none;
+      border: none;
+      object-fit: cover; /* 영상이 섹션을 꽉 채우도록 */
+    }
+
+    /* 어두운 오버레이 (홈 섹션 내부에 위치) */
+    #home .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 0; /* 영상과 콘텐츠 사이에 위치 */
+    }
+
+    /* 홈 섹션 콘텐츠 (hero-content) */
     .hero-content h1 {
       font-size: 4rem;
       font-weight: bold;
@@ -130,7 +132,17 @@
       padding: 100px 20px;
       max-width: 1200px;
       margin: 0 auto;
+      background-color: white; /* 모든 섹션의 배경을 흰색으로 설정 */
+      box-shadow: 0 0 20px rgba(0,0,0,0.05); /* 섹션에 그림자 추가 */
+      margin-bottom: 40px; /* 섹션 간 간격 */
+      border-radius: 10px; /* 섹션 모서리 둥글게 */
     }
+    
+    /* 첫 번째 섹션 (홈 섹션 다음)의 상단 마진 조정 */
+    #skills {
+        margin-top: 40px; /* 홈 섹션과의 간격 */
+    }
+
 
     .section-title {
       font-size: 3rem;
@@ -303,6 +315,15 @@
       margin-right: auto;
     }
 
+    /* 푸터 */
+    footer {
+        background: #333;
+        color: white;
+        text-align: center;
+        padding: 2rem 0;
+        margin-top: 40px; /* 마지막 섹션과의 간격 */
+    }
+
     /* 반응형 */
     @media (max-width: 768px) {
       .hero-content h1 {
@@ -316,6 +337,9 @@
       }
       .skills-grid, .projects-grid, .contact-info {
         grid-template-columns: 1fr;
+      }
+      .section-title {
+        font-size: 2.5rem;
       }
     }
   </style>
@@ -333,23 +357,26 @@
     </nav>
   </header>
 
-  <!-- Vimeo 배경 영상 iframe -->
-  <iframe
-    class="background-video"
-    src="https://player.vimeo.com/video/1095588389?background=1&autoplay=1&loop=1&muted=1&playsinline=1"
-    allow="autoplay; fullscreen; picture-in-picture"
-    allowfullscreen
-    title="HANTURI Portfolio Background Video"
-  ></iframe>
-
-  <!-- 어두운 오버레이 -->
-  <div class="overlay"></div>
-
   <!-- 홈 섹션 -->
-  <section id="home" class="hero-content">
-    <h1>HANTURI PORTFOLIO</h1>
-    <p>창의적인 영상 제작 & 모션 디자인</p>
-    <a href="#skills" class="cta-button">포트폴리오 보기</a>
+  <section id="home">
+    <!-- Vimeo 배경 영상 iframe -->
+    <iframe
+      class="background-video"
+      src="https://player.vimeo.com/video/1095588389?background=1&autoplay=1&loop=1&muted=1&playsinline=1"
+      allow="autoplay; fullscreen; picture-in-picture"
+      allowfullscreen
+      title="HANTURI Portfolio Background Video"
+    ></iframe>
+
+    <!-- 어두운 오버레이 -->
+    <div class="overlay"></div>
+
+    <!-- 홈 섹션 콘텐츠 -->
+    <div class="hero-content">
+      <h1>HANTURI PORTFOLIO</h1>
+      <p>창의적인 영상 제작 & 모션 디자인</p>
+      <a href="#skills" class="cta-button">포트폴리오 보기</a>
+    </div>
   </section>
 
   <!-- 기술 스택 섹션 -->
@@ -395,6 +422,21 @@
         </div>
       </div>
       <!-- 추가 프로젝트는 여기에 더 넣으시면 됩니다 -->
+      <div class="project-card">
+        <div class="project-image">포트폴리오 웹사이트 디자인</div>
+        <div class="project-content">
+          <h3 class="project-title">개인 포트폴리오 웹사이트</h3>
+          <p class="project-description">HTML, CSS를 활용하여 개인 포트폴리오 웹사이트를 디자인하고 개발했습니다.</p>
+          <div class="project-tech">
+            <span class="tech-tag">HTML</span>
+            <span class="tech-tag">CSS</span>
+            <span class="tech-tag">Vercel</span>
+          </div>
+          <div class="project-links">
+            <a href="#" target="_blank" class="project-link" rel="noopener noreferrer">사이트 보기</a>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -419,5 +461,11 @@
       </div>
     </div>
   </section>
+
+  <footer>
+    <div class="container">
+        <p>&copy; 2025 HANTURI. All rights reserved.</p>
+    </div>
+  </footer>
 </body>
 </html>

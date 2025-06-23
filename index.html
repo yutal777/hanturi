@@ -35,11 +35,13 @@
       opacity: 0; 
       pointer-events: none; /* 클릭 이벤트 등 비활성화 */
       transition: opacity 0.8s ease; /* 부드러운 전환 효과 추가 */
+      
+      object-fit: cover; /* 영상이 잘리지 않고 꽉 차게 화면에 맞춤 */
     }
 
     body.home-active .background-video {
       opacity: 1; /* 홈 섹션 활성화 시 완전히 보이도록 */
-      pointer-events: auto; /* 상호작용 가능하게 */
+      pointer-events: auto; /* 상호작용 가능하게 (필요에 따라 none 유지 가능) */
     }
 
     /* 영상 위 오버레이 (어둡게) */
@@ -122,11 +124,6 @@
       font-weight: bold;
       margin-bottom: 0.5rem;
     }
-    /* 제거된 p 태그 스타일 제거 */
-    /* .hero-content p {
-      font-size: 1.5rem;
-      margin-bottom: 2rem;
-    } */
 
     .cta-button {
       padding: 15px 40px;
@@ -138,7 +135,7 @@
       text-decoration: none;
       transition: background 0.3s ease, color 0.3s ease;
       backdrop-filter: blur(10px);
-      text-shadow: none; /* 포트폴리오 보기 텍스트 그림자 제거  */
+      text-shadow: none; /* 포트폴리오 보기 텍스트 그림자 제거 */
     }
 
     .cta-button:hover {
@@ -358,8 +355,8 @@
 
   <iframe
     class="background-video"
-    src="https://player.vimeo.com/video/1095588389?background=1&autoplay=1&loop=1&muted=1&playsinline=1"
-    allow="autoplay; fullscreen; picture-in-picture"
+    src="https://player.vimeo.com/video/1095588389?autoplay=1&loop=1&autopause=0&muted=1&background=1&playsinline=1&badge=0&player_id=0&app_id=58479"
+    allow="autoplay; fullscreen; picture-in-picture; encrypted-media; web-share"
     allowfullscreen
     title="HANTURI Portfolio Background Video"
   ></iframe>
@@ -407,7 +404,7 @@
             <span class="tech-tag">Photoshop</span>
           </div>
           <div class="project-links">
-            <a href="https://www.notion.so/21ba4a73a0d38074a1e1df8708e41f9d?source=copy_link" target="_blank" class="project-link" rel="noopener noreferrer">프로젝트 보기</a>
+            <a href="https://www.notion.so/21ba4a73a0d38074a1e1df8708e41f9d?source=copy_link" target="_blank" rel="noopener noreferrer">프로젝트 보기</a>
           </div>
         </div>
       </div>
@@ -439,15 +436,14 @@
     document.addEventListener('DOMContentLoaded', function() {
       const homeSection = document.getElementById('home');
       const body = document.body;
-      const backgroundVideo = document.querySelector('.background-video');
-      const overlay = document.querySelector('.overlay');
 
       // Intersection Observer를 사용하여 스크롤 이벤트를 정확하게 처리
       const observerOptions = {
         root: null, // 뷰포트를 기준으로
         rootMargin: '0px',
-        // 홈 섹션이 뷰포트의 절반 이상 보일 때 home-active 클래스를 추가
-        // 0.5를 기준으로 더 섬세한 조절이 필요할 수 있습니다 (예: [0, 0.5, 1.0])
+        // 홈 섹션이 뷰포트에 50% 이상 보일 때 home-active 클래스 추가
+        // 필요에 따라 threshold 값을 조정하여 전환 시점을 조절할 수 있습니다.
+        // 예를 들어, threshold: 0.1 이면 10%만 보여도 활성화.
         threshold: 0.5 
       };
 
@@ -459,7 +455,6 @@
               body.classList.add('home-active');
             } else {
               // 홈 섹션이 뷰포트에서 벗어났을 때 (위로 스크롤하여 완전히 벗어난 경우)
-              // 이 경우 body의 home-active 클래스를 제거하여 비디오를 숨기고 흰 배경을 보여줌
               body.classList.remove('home-active');
             }
           }

@@ -17,7 +17,7 @@
       font-family: 'Arial', sans-serif;
       overflow-x: hidden;
       scroll-behavior: smooth;
-      background-color: white; /* 모든 페이지의 기본 배경을 흰색으로 고정 */
+      background-color: white;
     }
 
     /* 배경 영상 iframe 스타일 */
@@ -31,15 +31,14 @@
       z-index: -1;
       border: none;
       
-      /* opacity와 pointer-events로 가시성 제어, display: none 대신 */
       opacity: 0; 
-      pointer-events: none; /* 클릭 이벤트 등 비활성화 */
-      transition: opacity 0.8s ease; /* 부드러운 전환 효과 추가 */
+      pointer-events: none;
+      transition: opacity 1.2s ease;
     }
 
     body.home-active .background-video {
-      opacity: 1; /* 홈 섹션 활성화 시 완전히 보이도록 */
-      pointer-events: auto; /* 상호작용 가능하게 */
+      opacity: 1;
+      pointer-events: auto;
     }
 
     /* 영상 위 오버레이 (어둡게) */
@@ -52,15 +51,31 @@
       background: rgba(0, 0, 0, 0.4);
       z-index: 0;
       
-      /* opacity와 pointer-events로 가시성 제어, display: none 대신 */
       opacity: 0;
-      pointer-events: none; /* 클릭 이벤트 등 비활성화 */
-      transition: opacity 0.8s ease; /* 부드러운 전환 효과 추가 */
+      pointer-events: none;
+      transition: opacity 1.2s ease;
     }
 
     body.home-active .overlay {
-      opacity: 1; /* 홈 섹션 활성화 시 완전히 보이도록 */
-      pointer-events: auto; /* 상호작용 가능하게 */
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* 배경 전환을 위한 흰색 배경 레이어 */
+    .white-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: white;
+      z-index: -2;
+      opacity: 0;
+      transition: opacity 1.2s ease;
+    }
+
+    body:not(.home-active) .white-background {
+      opacity: 1;
     }
 
     /* 헤더 스타일 */
@@ -114,7 +129,7 @@
       text-align: center;
       text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
       padding: 0 20px;
-      background-color: transparent; /* 홈 섹션의 배경은 항상 투명하게 유지 */
+      background-color: transparent;
     }
     
     .hero-content h1 {
@@ -122,11 +137,6 @@
       font-weight: bold;
       margin-bottom: 0.5rem;
     }
-    /* 제거된 p 태그 스타일 제거 */
-    /* .hero-content p {
-      font-size: 1.5rem;
-      margin-bottom: 2rem;
-    } */
 
     .cta-button {
       padding: 15px 40px;
@@ -138,7 +148,7 @@
       text-decoration: none;
       transition: background 0.3s ease, color 0.3s ease;
       backdrop-filter: blur(10px);
-      text-shadow: none; /* 포트폴리오 보기 텍스트 그림자 제거  */
+      text-shadow: none;
     }
 
     .cta-button:hover {
@@ -152,7 +162,9 @@
       padding: 100px 20px;
       max-width: 1200px;
       margin: 0 auto;
-      background-color: white; /* 모든 섹션에 흰색 배경을 강제 적용 */
+      background-color: transparent;
+      position: relative;
+      z-index: 1;
     }
 
     .section-title {
@@ -309,6 +321,17 @@
       border-radius: 15px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
       text-align: center;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .contact-item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+      text-decoration: none;
+      color: inherit;
     }
 
     .contact-icon {
@@ -324,6 +347,16 @@
       align-items: center;
       margin-left: auto;
       margin-right: auto;
+    }
+
+    .contact-item h3 {
+      margin-bottom: 0.5rem;
+      color: #333;
+    }
+
+    .contact-item p {
+      color: #666;
+      margin: 0;
     }
 
     /* 반응형 */
@@ -344,6 +377,8 @@
   </style>
 </head>
 <body>
+  <div class="white-background"></div>
+
   <header>
     <div class="logo">Portfolio</div>
     <nav>
@@ -411,27 +446,27 @@
           </div>
         </div>
       </div>
-      </div>
+    </div>
   </section>
 
   <section id="contact">
     <h2 class="section-title">연락처</h2>
     <div class="contact-info">
-      <div class="contact-item">
+      <a href="mailto:hanturi777@gmail.com" class="contact-item">
         <div class="contact-icon">📧</div>
         <h3>이메일</h3>
-        <p><a href="mailto:hanturi777@gmail.com">hanturi777@gmail.com</a></p>
-      </div>
-      <div class="contact-item">
+        <p>hanturi777@gmail.com</p>
+      </a>
+      <a href="https://www.instagram.com/hanturi777/" target="_blank" rel="noopener noreferrer" class="contact-item">
         <div class="contact-icon">📸</div>
         <h3>인스타그램</h3>
-        <p><a href="https://www.instagram.com/hanturi777/" target="_blank" rel="noopener noreferrer">@hanturi777</a></p>
-      </div>
-      <div class="contact-item">
+        <p>@hanturi777</p>
+      </a>
+      <a href="https://www.youtube.com/@Hanturi" target="_blank" rel="noopener noreferrer" class="contact-item">
         <div class="contact-icon">▶️</div>
         <h3>유튜브</h3>
-        <p><a href="https://www.youtube.com/@Hanturi" target="_blank" rel="noopener noreferrer">@Hanturi</a></p>
-      </div>
+        <p>@Hanturi</p>
+      </a>
     </div>
   </section>
 
@@ -439,47 +474,37 @@
     document.addEventListener('DOMContentLoaded', function() {
       const homeSection = document.getElementById('home');
       const body = document.body;
-      const backgroundVideo = document.querySelector('.background-video');
-      const overlay = document.querySelector('.overlay');
 
-      // Intersection Observer를 사용하여 스크롤 이벤트를 정확하게 처리
       const observerOptions = {
-        root: null, // 뷰포트를 기준으로
+        root: null,
         rootMargin: '0px',
-        // 홈 섹션이 뷰포트의 절반 이상 보일 때 home-active 클래스를 추가
-        // 0.5를 기준으로 더 섬세한 조절이 필요할 수 있습니다 (예: [0, 0.5, 1.0])
-        threshold: 0.5 
+        threshold: 0.3
       };
 
       const homeObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.target.id === 'home') {
             if (entry.isIntersecting) {
-              // 홈 섹션이 뷰포트 내에 있을 때
               body.classList.add('home-active');
             } else {
-              // 홈 섹션이 뷰포트에서 벗어났을 때 (위로 스크롤하여 완전히 벗어난 경우)
-              // 이 경우 body의 home-active 클래스를 제거하여 비디오를 숨기고 흰 배경을 보여줌
               body.classList.remove('home-active');
             }
           }
         });
       }, observerOptions);
 
-      // 홈 섹션을 관찰 시작
       if (homeSection) {
         homeObserver.observe(homeSection);
       }
 
-      // 초기 로드 시 `home-active` 클래스 설정 (Intersection Observer가 비동기로 동작하므로)
-      // 페이지 로드 시 URL 해시가 #home이거나 없으면 홈 페이지로 간주
+      // 초기 로드 시 설정
       if (window.location.hash === '#home' || window.location.hash === '') {
         body.classList.add('home-active');
       } else {
         body.classList.remove('home-active');
       }
 
-      // 네비게이션 링크 클릭 시 스크롤 후 배경 변경 로직
+      // 네비게이션 링크 클릭 시 처리
       document.querySelectorAll('nav ul li a').forEach(link => {
         link.addEventListener('click', function(e) {
           e.preventDefault(); 
@@ -489,16 +514,14 @@
           if (targetSection) {
             targetSection.scrollIntoView({ behavior: 'smooth' });
 
-            // 스크롤이 완료될 시간을 고려하여 클래스 변경
             setTimeout(() => {
-              window.location.hash = targetId; // URL 해시 업데이트
-              // 수동으로 클래스를 제어하여 전환을 확실히 함
+              window.location.hash = targetId;
               if (targetId === '#home') {
                 body.classList.add('home-active');
               } else {
                 body.classList.remove('home-active');
               }
-            }, 800); // 스크롤 애니메이션 시간에 맞춰 조절 (필요에 따라 더 길게 설정 가능)
+            }, 600);
           }
         });
       });

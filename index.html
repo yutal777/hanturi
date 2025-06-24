@@ -234,13 +234,17 @@
       border-radius: 15px;
       overflow: hidden;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s ease;
-      display: flex;
-      flex-direction: column;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
     }
 
     .project-card:hover {
       transform: translateY(-10px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+      text-decoration: none;
     }
 
     .project-image {
@@ -431,7 +435,7 @@
   <section id="projects">
     <h2 class="section-title">프로젝트</h2>
     <div class="projects-grid">
-      <div class="project-card">
+      <a href="https://www.notion.so/21ba4a73a0d38074a1e1df8708e41f9d?source=copy_link" target="_blank" rel="noopener noreferrer" class="project-card">
         <div class="project-image" style="background-image: url('https://ifh.cc/g/h8chZm.jpg'); background-size: cover; background-position: center;"></div>
         <div class="project-content">
           <h3 class="project-title">모션그래픽 영상 프로젝트</h3>
@@ -441,11 +445,8 @@
             <span class="tech-tag">Premiere Pro</span>
             <span class="tech-tag">Photoshop</span>
           </div>
-          <div class="project-links">
-            <a href="https://www.notion.so/21ba4a73a0d38074a1e1df8708e41f9d?source=copy_link" target="_blank" class="project-link" rel="noopener noreferrer">프로젝트 보기</a>
-          </div>
         </div>
-      </div>
+      </a>
     </div>
   </section>
 

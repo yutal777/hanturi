@@ -44,7 +44,6 @@
 
             useEffect(() => {
                 renderIcon();
-                // 라이브러리가 아직 로드되지 않았을 경우를 대비한 반복 체크
                 if (!window.lucide || !window.lucide.icons[name]) {
                     const timer = setInterval(() => {
                         if (window.lucide && window.lucide.icons[name]) {
@@ -66,7 +65,7 @@
             );
         };
 
-        // 인스타그램 전용 인라인 SVG (무조건 표시됨)
+        // 인스타그램 전용 인라인 SVG
         const InstagramIcon = ({ size = 24 }) => (
             <svg 
                 width={size} 
@@ -151,35 +150,21 @@
                 </div>
             );
 
+            // 상품 준비중 페이지 (Products 클릭 시 이동)
             const ProductsPage = () => {
-                const cats = [
-                    { id: 1, name: 'Minimalism', desc: '단순함의 미학을 담은 라인워크 시리즈' },
-                    { id: 2, name: 'Typography', desc: '강렬한 메시지를 전달하는 폰트 컬렉션' },
-                    { id: 3, name: 'Geometric', desc: '완벽한 비율과 형태의 기하학적 문양' },
-                    { id: 4, name: 'Vintage', desc: '시간의 흔적을 담은 아날로그 감성' },
-                    { id: 5, name: 'Illustration', desc: '작가의 독창적인 세계관이 담긴 아트웍' },
-                    { id: 6, name: 'Special Edition', desc: '브랜드 콜라보레이션 및 한정판 스티커' }
-                ];
                 return (
-                    <div className="pt-32 px-6 pb-20 max-w-7xl mx-auto">
-                        <div className="mb-20 text-left">
-                            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-[0.3em] mb-4">Categories</h2>
-                            <h1 className="text-5xl md:text-7xl font-semibold tracking-tighter uppercase">OUR VARIETY</h1>
+                    <div className="min-h-[80vh] flex flex-col items-center justify-center pt-32 px-6 pb-20 max-w-7xl mx-auto text-center">
+                        <div className="mb-8 opacity-20">
+                            <Icon name="package" size={80} />
                         </div>
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {cats.map(cat => (
-                                <div key={cat.id} onClick={() => navigateTo('detail', cat)} className="group relative border border-white/10 bg-[#0d0d0d] p-10 h-[400px] flex flex-col justify-between hover:bg-white hover:text-black transition-all duration-500 cursor-pointer">
-                                    <span className="text-4xl font-semibold opacity-10 group-hover:opacity-100">0{cat.id}</span>
-                                    <div className="text-left">
-                                        <h3 className="text-3xl font-semibold mb-4 tracking-tighter uppercase">{cat.name}</h3>
-                                        <p className="text-sm opacity-60 mb-8">{cat.desc}</p>
-                                        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-tighter pt-4 border-t border-current/20">
-                                            Explore Collection <Icon name="chevron-right" size={14} />
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                        <h1 className="text-4xl md:text-6xl font-semibold tracking-tighter uppercase mb-6">COMING SOON</h1>
+                        <p className="text-xl md:text-2xl font-light text-gray-400 mb-12">상품 준비중입니다..</p>
+                        <button 
+                            onClick={() => navigateTo('home')}
+                            className="text-sm font-semibold uppercase tracking-widest border-b border-white pb-2 hover:text-gray-400 transition"
+                        >
+                            Back to Home
+                        </button>
                     </div>
                 );
             };
@@ -187,7 +172,7 @@
             const DetailPage = ({ product }) => (
                 <div className="pt-32 px-6 pb-40 max-w-7xl mx-auto text-left">
                     <button onClick={() => navigateTo('products')} className="flex items-center gap-2 text-gray-500 hover:text-white mb-12 text-sm uppercase tracking-widest font-semibold">
-                        <Icon name="arrow-left" size={18} /> Back to Categories
+                        <Icon name="arrow-left" size={18} /> Back to Products
                     </button>
                     <div className="grid lg:grid-cols-2 gap-16 mb-16">
                         <div className="aspect-square bg-[#111] border border-white/5 flex items-center justify-center relative overflow-hidden">
@@ -206,14 +191,6 @@
                                 <div className="flex justify-between py-4 border-b border-white/10"><span className="text-gray-500 font-medium">Price</span><span className="text-2xl font-semibold">₩18,000</span></div>
                             </div>
                             <button className="w-full bg-white text-black py-5 font-semibold uppercase tracking-widest hover:bg-gray-200 transition">BUY</button>
-                        </div>
-                    </div>
-                    <div className="mt-20">
-                        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-10 pb-4 border-b border-white/10">Detailed Views</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {[1, 2, 3, 4, 5].map(n => (
-                                <div key={n} className={`bg-[#0d0d0d] border border-white/5 flex items-center justify-center text-gray-700 text-xs uppercase ${n === 4 ? 'aspect-[4/5] md:col-span-2' : 'aspect-square'}`}>Detail Shot 0{n}</div>
-                            ))}
                         </div>
                     </div>
                 </div>

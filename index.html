@@ -17,23 +17,38 @@
     <style>
         body { font-family: 'Pretendard', sans-serif; background-color: black; color: white; }
         .selection\:bg-white ::selection { background-color: white; color: black; }
+        /* Lucide 아이콘이 텍스트 색상을 따라가도록 설정 */
+        .lucide-icon svg { stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
     </style>
 </head>
 <body class="selection:bg-white">
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useMemo } = React;
         
-        // Lucide 아이콘 컴포넌트 래퍼
+        // Lucide 아이콘 컴포넌트 래퍼 (React 호환 방식)
         const Icon = ({ name, size = 24, className = "" }) => {
-            const [iconSvg, setIconSvg] = useState("");
-            useEffect(() => {
-                if (window.lucide) {
-                    const svg = window.lucide.createIcons();
+            const svgContent = useMemo(() => {
+                if (window.lucide && window.lucide.icons[name]) {
+                    // lucide.icons[name]에서 SVG 문자열을 생성
+                    return window.lucide.icons[name].toSvg({
+                        width: size,
+                        height: size,
+                        class: className
+                    });
                 }
-            }, [name]);
-            return <i data-lucide={name} style={{ width: size, height: size }} className={className}></i>;
+                return "";
+            }, [name, size, className]);
+
+            if (!svgContent) return <span style={{ width: size, height: size, display: 'inline-block' }}></span>;
+
+            return (
+                <span 
+                    className="lucide-icon inline-flex items-center justify-center"
+                    dangerouslySetInnerHTML={{ __html: svgContent }} 
+                />
+            );
         };
 
         function App() {
@@ -43,7 +58,6 @@
 
             useEffect(() => {
                 window.scrollTo(0, 0);
-                if (window.lucide) window.lucide.createIcons();
             }, [page]);
 
             const navigateTo = (p, data = null) => {
@@ -62,7 +76,7 @@
                         <button onClick={() => navigateTo('products')} className={`hover:text-gray-400 transition ${page === 'products' ? 'text-white' : 'text-gray-500'}`}>Products</button>
                         <button onClick={() => navigateTo('products')} className="bg-white text-black px-6 py-2 text-xs font-semibold hover:bg-gray-200 transition tracking-widest ml-4">BUY</button>
                     </div>
-                    <div className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                    <div className="md:hidden cursor-pointer" onClick={() => setIsMenuOpen(!isMenuOpen)}>
                         <Icon name={isMenuOpen ? "x" : "menu"} />
                     </div>
                     {isMenuOpen && (
@@ -83,7 +97,7 @@
                             <p className="text-xl md:text-3xl font-light mb-4">Pick your variety,<br />stick your style.</p>
                             <p className="text-gray-500 text-sm md:text-lg mb-12">다양함을 Pick하고, 당신의 스타일을 붙이세요.</p>
                             <button onClick={() => navigateTo('products')} className="group flex items-center gap-3 mx-auto text-sm font-semibold uppercase tracking-widest border-b border-white pb-2 hover:text-gray-400 transition">
-                                VIEW PRODUCTS <Icon name="arrow-right" size={16} className="inline ml-1" />
+                                VIEW PRODUCTS <Icon name="arrow-right" size={16} />
                             </button>
                         </div>
                     </section>
@@ -183,9 +197,16 @@
                     <footer className="border-t border-white/10 pt-20 pb-10 px-6 text-center">
                         <div className="text-4xl font-semibold tracking-tighter mb-6 uppercase">PICK</div>
                         <p className="text-gray-500 text-sm mb-10">다양함을 Pick하고, 당신의 스타일을 붙이세요.</p>
-                        <a href="https://www.instagram.com/pick_official2026/" target="_blank" rel="noopener noreferrer" className="inline-block text-gray-500 hover:text-white transition">
-                            <Icon name="instagram" size={24} />
-                        </a>
+                        <div className="flex justify-center mb-10">
+                            <a 
+                                href="https://www.instagram.com/pick_official2026/" 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="inline-flex text-gray-500 hover:text-white transition p-2"
+                            >
+                                <Icon name="instagram" size={32} />
+                            </a>
+                        </div>
                         <div className="mt-20 pt-8 border-t border-white/5 text-[10px] text-gray-600 uppercase tracking-widest">
                             © 2024 PICK BRAND. All Rights Reserved.
                         </div>

@@ -5,48 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PICK - Official Store</title>
     
-    <!-- SEO 및 소셜 미디어 엠베드 설정 -->
+    <!-- SEO 및 소셜 미디어 설정 -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://picksticker.store">
     <meta property="og:title" content="PICK - Official Store">
     <meta property="og:description" content="다양함을 Pick하고, 당신의 스타일을 붙이세요.">
     <meta property="og:image" content="/imagepick.png">
     
-    <!-- Twitter Card 설정 -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="PICK - Official Store">
     <meta name="twitter:description" content="다양함을 Pick하고, 당신의 스타일을 붙이세요.">
     <meta name="twitter:image" content="/imagepick.png">
 
-    <!-- 파비콘 설정 -->
     <link rel="icon" href="/favicon.png" type="image/png">
     
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Pretendard Font -->
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
-    <!-- React & Babel CDNs -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Pretendard', sans-serif; background-color: black; color: white; margin: 0; overflow-x: hidden; }
+        body { font-family: 'Pretendard', sans-serif; background-color: black; color: white; margin: 0; overflow-x: hidden; scroll-behavior: smooth; }
         .selection\:bg-white ::selection { background-color: white; color: black; }
         
-        /* Lucide 아이콘 스타일 강제 적용 */
-        .lucide-icon svg { stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; }
+        .reveal { opacity: 0; transform: translateY(20px); transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
+        .reveal.active { opacity: 1; transform: translateY(0); }
 
-        /* 등장 애니메이션 (Reveal 컴포넌트용) */
-        .reveal {
-            opacity: 0;
-            transform: translateY(40px);
-            transition: all 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+        /* Fold & Slide 컨테이너 애니메이션 */
+        .fold-slide-exit {
+            animation: foldSlideOut 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            pointer-events: none;
+            z-index: 60;
         }
-        .reveal.active {
-            opacity: 1;
-            transform: translateY(0);
+
+        @keyframes foldSlideOut {
+            0% { transform: translateX(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateX(-120%) rotate(-10deg); opacity: 0; }
+        }
+
+        .peel-front {
+            animation: clipFoldFront 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        @keyframes clipFoldFront {
+            0% { clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%); }
+            100% { clip-path: polygon(0% 0%, 20% 0%, 20% 100%, 0% 100%); }
+        }
+
+        .peel-back {
+            transform: scaleX(-1);
+            background-color: #ffffff !important;
+            filter: brightness(1.2);
+            opacity: 0;
+            animation: clipFoldBack 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        @keyframes clipFoldBack {
+            0% { opacity: 0; clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%); }
+            1% { opacity: 1; }
+            100% { clip-path: polygon(20% 0, 100% 0, 100% 100%, 20% 100%); }
+        }
+
+        .popup-overlay {
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
     </style>
 </head>
@@ -55,134 +78,64 @@
 
     <script type="text/babel">
         const { useState, useEffect, useCallback, useRef } = React;
-        
-        // Lucide 아이콘 컴포넌트
-        const Icon = ({ name, size = 24, className = "" }) => {
-            const [svg, setSvg] = useState("");
 
-            const renderIcon = useCallback(() => {
-                if (window.lucide && window.lucide.icons[name]) {
-                    const svgString = window.lucide.icons[name].toSvg({
-                        width: size,
-                        height: size,
-                        class: className
-                    });
-                    setSvg(svgString);
-                }
-            }, [name, size, className]);
-
-            useEffect(() => {
-                renderIcon();
-                if (!window.lucide || !window.lucide.icons[name]) {
-                    const timer = setInterval(() => {
-                        if (window.lucide && window.lucide.icons[name]) {
-                            renderIcon();
-                            clearInterval(timer);
-                        }
-                    }, 100);
-                    return () => clearInterval(timer);
-                }
-            }, [renderIcon, name]);
-
-            if (!svg) return <span style={{ width: size, height: size, display: 'inline-block' }}></span>;
-
-            return (
-                <span 
-                    className="lucide-icon inline-flex items-center justify-center"
-                    dangerouslySetInnerHTML={{ __html: svg }} 
-                />
-            );
-        };
-
-        // 화살표 전용 인라인 SVG
-        const ArrowRightIcon = ({ size = 16, className = "" }) => (
-            <svg 
-                width={size} 
-                height={size} 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2.5" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
-                className={className}
-            >
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-                <polyline points="12 5 19 12 12 19"></polyline>
+        const ArrowDown = ({ className }) => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline>
             </svg>
         );
 
-        // 인스타그램 전용 인라인 SVG
+        const ArrowRight = ({ size = 20, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+        );
+
+        const XIcon = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        );
+
         const InstagramIcon = ({ size = 24 }) => (
-            <svg 
-                width={size} 
-                height={size} 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
-            >
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
                 <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
                 <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
             </svg>
         );
 
-        // 스크롤 감지 래퍼 컴포넌트
         const Reveal = ({ children, className = "", style = {} }) => {
             const ref = useRef(null);
             useEffect(() => {
-                const observer = new IntersectionObserver(
-                    ([entry]) => {
-                        if (entry.isIntersecting) {
-                            entry.target.classList.add('active');
-                        }
-                    },
-                    { threshold: 0.1 }
-                );
+                const observer = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) entry.target.classList.add('active'); }, { threshold: 0.1 });
                 if (ref.current) observer.observe(ref.current);
                 return () => observer.disconnect();
             }, []);
             return <div ref={ref} className={`reveal ${className}`} style={style}>{children}</div>;
         };
 
-        // 익명화된 카테고리 데이터
         const categories = [
-            { id: 1, name: '???', desc: 'coming soon..' },
-            { id: 2, name: '???', desc: 'coming soon..' },
-            { id: 3, name: '???', desc: 'coming soon..' },
-            { id: 4, name: '???', desc: 'coming soon..' },
-            { id: 5, name: '???', desc: 'coming soon..' },
-            { id: 6, name: '???', desc: 'coming soon..' }
+            { id: 1, name: 'Edition 01' }, { id: 2, name: 'Edition 02' },
+            { id: 3, name: 'Edition 03' }, { id: 4, name: 'Edition 04' },
+            { id: 5, name: 'Edition 05' }, { id: 6, name: 'Edition 06' }
         ];
 
         function App() {
             const [page, setPage] = useState('home');
             const [selectedProduct, setSelectedProduct] = useState(null);
-            const [isMenuOpen, setIsMenuOpen] = useState(false);
+            const [isPopupOpen, setIsPopupOpen] = useState(false);
+            const previewRef = useRef(null);
 
             const syncPageWithHash = useCallback(() => {
                 const hash = window.location.hash;
-                if (!hash || hash === '#/' || hash === '#/home') {
-                    setPage('home');
-                    setSelectedProduct(null);
-                } else if (hash === '#/products') {
-                    setPage('products');
-                    setSelectedProduct(null);
-                } else if (hash === '#/error') {
-                    setPage('error');
-                    setSelectedProduct(null);
-                } else if (hash.startsWith('#/detail')) {
-                    const params = new URLSearchParams(hash.split('?')[1]);
-                    const id = parseInt(params.get('id'));
-                    const product = categories.find(c => c.id === id);
-                    setPage('detail');
-                    setSelectedProduct(product || null);
-                } else {
-                    setPage('error'); // 정의되지 않은 경로는 404로 유도
-                }
+                if (!hash || hash === '#/' || hash === '#/home') { setPage('home'); setSelectedProduct(null); }
+                else if (hash === '#/products') { setPage('products'); setSelectedProduct(null); }
+                else if (hash.startsWith('#/detail')) {
+                    const id = parseInt(new URLSearchParams(hash.split('?')[1]).get('id'));
+                    const p = categories.find(c => c.id === id);
+                    setPage('detail'); setSelectedProduct(p || null);
+                } else { setPage('error'); }
                 window.scrollTo(0, 0);
             }, []);
 
@@ -193,228 +146,246 @@
             }, [syncPageWithHash]);
 
             const navigateTo = (p, data = null) => {
-                let targetHash = '#/';
-                if (p === 'home') targetHash = '#/home';
-                else if (p === 'products') targetHash = '#/products';
-                else if (p === 'error') targetHash = '#/error';
-                else if (p === 'detail' && data) targetHash = `#/detail?id=${data.id}`;
-                
-                window.location.hash = targetHash;
-                setIsMenuOpen(false);
+                let target = '#/home';
+                if (p === 'products') target = '#/products';
+                else if (p === 'detail' && data) target = `#/detail?id=${data.id}`;
+                window.location.hash = target;
             };
 
+            const scrollToPreview = () => { if (previewRef.current) previewRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+
+            const PurchasePopup = () => (
+                <div 
+                    className="fixed inset-0 z-[100] bg-black popup-overlay flex items-center justify-center p-6 text-center"
+                    onClick={() => setIsPopupOpen(false)}
+                >
+                    <button className="absolute top-8 right-8 text-white hover:opacity-60 transition">
+                        <XIcon size={32} />
+                    </button>
+                    <div className="max-w-4xl animate-in zoom-in-95 duration-300 px-4">
+                        <h2 className="text-2xl md:text-5xl font-bold leading-relaxed tracking-tighter mb-10 break-keep">
+                            비전홀 2F 전자상거래 PICK 부스에서 <br className="hidden md:block" />현장 구매해 주세요!
+                        </h2>
+                        <button 
+                            className="text-xs uppercase tracking-[0.4em] text-gray-500 hover:text-white border border-gray-800 hover:border-white px-8 py-3 transition-all"
+                            onClick={(e) => { e.stopPropagation(); setIsPopupOpen(false); }}
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            );
+
             const Navbar = () => (
-                <nav className="fixed top-0 left-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-white/10 px-6 py-4 flex justify-between items-center text-white">
-                    <div className="text-2xl font-semibold tracking-tighter cursor-pointer" onClick={() => navigateTo('home')}>
-                        PICK
+                <nav className="fixed top-0 left-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-white/10 px-6 py-4 flex justify-between items-center text-white font-semibold">
+                    <div className="text-2xl font-bold tracking-tighter cursor-pointer" onClick={() => navigateTo('home')}>PICK</div>
+                    <div className="hidden md:flex items-center gap-10 text-sm uppercase tracking-widest">
+                        <button onClick={() => navigateTo('home')} className={page === 'home' ? 'text-white' : 'text-gray-500'}>Home</button>
+                        <button onClick={() => navigateTo('products')} className={page === 'products' ? 'text-white' : 'text-gray-500'}>Products</button>
+                        <button 
+                            onClick={() => setIsPopupOpen(true)}
+                            className="bg-white text-black px-6 py-2 text-xs font-bold tracking-widest ml-4"
+                        >
+                            BUY
+                        </button>
                     </div>
-                    <div className="hidden md:flex items-center gap-10 text-sm font-medium uppercase tracking-widest text-white">
-                        <button onClick={() => navigateTo('home')} className={`hover:text-gray-400 transition ${page === 'home' ? 'text-white' : 'text-gray-500'}`}>Home</button>
-                        <button onClick={() => navigateTo('products')} className={`hover:text-gray-400 transition ${page === 'products' ? 'text-white' : 'text-gray-500'}`}>Products</button>
-                        <button onClick={() => navigateTo('products')} className="bg-white text-black px-6 py-2 text-xs font-semibold hover:bg-gray-200 transition tracking-widest ml-4 border-none outline-none">BUY</button>
-                    </div>
-                    <div className="md:hidden cursor-pointer text-white" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-                        <Icon name={isMenuOpen ? "x" : "menu"} />
-                    </div>
-                    {isMenuOpen && (
-                        <div className="fixed inset-0 top-[65px] bg-black z-40 p-10 flex flex-col gap-8 text-4xl font-semibold md:hidden">
-                            <button onClick={() => navigateTo('home')}>HOME</button>
-                            <button onClick={() => navigateTo('products')}>PRODUCTS</button>
-                            <button onClick={() => navigateTo('products')} className="bg-white text-black py-4 text-xl text-center">BUY NOW</button>
-                        </div>
-                    )}
                 </nav>
             );
 
-            const HomePage = () => (
-                <div className="pt-24">
-                    <section className="px-6 py-20 md:py-40 max-w-7xl mx-auto flex flex-col items-center text-center">
-                        <Reveal>
-                            <h1 className="text-7xl md:text-[12rem] font-semibold tracking-tighter leading-none mb-10 opacity-90 select-none">
-                                PICK
-                            </h1>
-                        </Reveal>
-                        
-                        <Reveal style={{ transitionDelay: '0.2s' }}>
-                            <div className="max-w-2xl mt-10">
-                                <p className="text-xl md:text-3xl font-light mb-4">Pick your variety,<br />stick your style.</p>
-                                <p className="text-gray-500 text-sm md:text-lg mb-12">다양함을 Pick하고, 당신의 스타일을 붙이세요.</p>
-                                
-                                <button 
-                                    onClick={() => navigateTo('products')} 
-                                    className="group flex items-center gap-4 mx-auto text-sm font-semibold uppercase tracking-widest border border-white px-12 py-5 hover:bg-white hover:text-black transition-all duration-300"
-                                >
-                                    VIEW PRODUCTS 
-                                    <ArrowRightIcon className="group-hover:translate-x-2 transition-transform duration-300" />
-                                </button>
-                            </div>
-                        </Reveal>
-                    </section>
-
-                    <section className="px-6 py-32 border-t border-white/10 bg-[#0a0a0a]">
-                        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-20 text-left">
-                            <Reveal>
-                                <div className="space-y-6">
-                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-widest">[ 01. Concept ]</span>
-                                    <h2 className="text-3xl md:text-4xl font-semibold leading-tight">당신의 개성을 표현하는<br />가장 작은 조각, 스티커.</h2>
-                                    <p className="text-gray-400">평범한 일상에 새로운 생명력을 불어넣고 자신의 취향을 공유하는 문화를 만듭니다.</p>
-                                </div>
-                            </Reveal>
-                            <Reveal style={{ transitionDelay: '0.2s' }}>
-                                <div className="space-y-6">
-                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-widest">[ 02. Quality ]</span>
-                                    <h2 className="text-3xl md:text-4xl font-semibold leading-tight">타협하지 않는 디테일과<br />지속 가능한 소재의 조화.</h2>
-                                    <p className="text-gray-400">고해상도 프린팅과 강력한 내구성으로 소중한 물건을 안전하고 아름답게 꾸며줍니다.</p>
-                                </div>
-                            </Reveal>
-                        </div>
-                    </section>
+            const StickerUI = ({ editionName, opacity = 1, isBack = false }) => (
+                <div className={`absolute inset-0 border border-white/10 flex flex-col items-center justify-center transition-opacity duration-300 ${isBack ? 'bg-white' : 'bg-[#1a1a1a]'}`} style={{ opacity }}>
+                    <div className={`w-64 h-64 border-2 ${isBack ? 'border-gray-200' : 'border-gray-500/20'} rotate-12 flex items-center justify-center p-8 text-center`}>
+                        <span className={`text-2xl font-semibold italic uppercase tracking-tighter ${isBack ? 'text-gray-300' : 'text-gray-500/50'}`}>PICK STICKER<br/>{editionName}</span>
+                    </div>
+                    <div className="absolute bottom-8 left-8 text-left">
+                        <h3 className={`text-xl font-bold tracking-tighter uppercase ${isBack ? 'text-gray-200' : 'text-white/90'}`}>{editionName}</h3>
+                        <span className={`text-[10px] uppercase tracking-widest ${isBack ? 'text-gray-300' : 'text-gray-600'}`}>Interactive Preview</span>
+                    </div>
+                    {!isBack && <div className="absolute top-4 right-4 text-[8px] uppercase tracking-widest text-gray-500/20 font-medium">Authentic PICK Label</div>}
                 </div>
             );
 
-            // 리뉴얼된 404 에러 페이지
-            const Error404Page = () => (
-                <div className="min-h-[80vh] flex flex-col items-center justify-center pt-32 px-6 pb-20 max-w-7xl mx-auto text-center">
-                    <Reveal>
-                        <div className="mb-8 opacity-10">
-                            <h1 className="text-[10rem] md:text-[15rem] font-semibold leading-none tracking-tighter">404</h1>
-                        </div>
-                        <h1 className="text-3xl md:text-5xl font-semibold tracking-tighter uppercase mb-6 leading-tight">PAGE NOT FOUND</h1>
-                        <p className="text-lg md:text-xl font-light text-gray-500 mb-12">요청하신 페이지를 찾을 수 없거나<br/>준비 중인 서비스입니다.</p>
-                        <button 
-                            onClick={() => navigateTo('home')}
-                            className="text-sm font-semibold uppercase tracking-widest border border-white px-10 py-4 hover:bg-white hover:text-black transition-all"
-                        >
-                            Back to Home
-                        </button>
-                    </Reveal>
-                </div>
-            );
+            const StickerStack = () => {
+                const [currentIndex, setCurrentIndex] = useState(0);
+                const [isPeeling, setIsPeeling] = useState(false);
 
-            // 정식 제품 리스트 페이지
-            const ProductsPage = () => {
+                const handlePeel = () => {
+                    if (isPeeling) return;
+                    setIsPeeling(true);
+                    setTimeout(() => {
+                        setCurrentIndex((prev) => (prev + 1) % categories.length);
+                        setIsPeeling(false);
+                    }, 500);
+                };
+
+                const getCard = (offset) => categories[(currentIndex + offset) % categories.length];
+
                 return (
-                    <div className="pt-32 px-6 pb-20 max-w-7xl mx-auto">
-                        <Reveal>
-                            <div className="mb-20 text-left">
-                                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-[0.3em] mb-4">Categories</h2>
-                                <h1 className="text-5xl md:text-7xl font-semibold tracking-tighter uppercase">OUR VARIETY</h1>
+                    <div className="relative w-full max-w-sm aspect-[3/4] mx-auto">
+                        <div className="absolute inset-0 bg-[#060606] border border-white/5 rounded-sm transform rotate-[-10deg] translate-y-6 translate-x-4 z-0 shadow-lg flex items-center justify-center overflow-hidden">
+                             <StickerUI editionName={getCard(2).name} opacity={0.2} />
+                        </div>
+                        
+                        <div className={`absolute inset-0 border border-white/5 rounded-sm z-10 flex flex-col items-center justify-center overflow-hidden transition-all duration-500 shadow-xl opacity-100 ${isPeeling ? 'bg-[#1a1a1a] rotate-0 translate-y-0 opacity-100' : 'bg-[#0d0d0d] rotate-[12deg] translate-y-3'}`}>
+                             <StickerUI editionName={getCard(1).name} opacity={isPeeling ? 1 : 0.5} />
+                        </div>
+
+                        <div 
+                            key={currentIndex}
+                            onClick={handlePeel}
+                            className={`absolute inset-0 z-20 cursor-pointer ${isPeeling ? 'fold-slide-exit' : 'hover:scale-[1.01] transition-transform duration-300'}`}
+                        >
+                            <div className="w-full h-full relative overflow-hidden shadow-2xl rounded-sm">
+                                <div className={`absolute inset-0 z-10 ${isPeeling ? 'peel-front' : ''}`}>
+                                    <StickerUI editionName={getCard(0).name} />
+                                </div>
+                                <div className={`absolute inset-0 z-20 ${isPeeling ? 'peel-back' : 'hidden'}`}>
+                                    <StickerUI editionName={getCard(0).name} isBack={true} />
+                                </div>
                             </div>
-                        </Reveal>
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {categories.map((cat, idx) => (
-                                <Reveal key={cat.id} style={{ transitionDelay: `${(idx % 3) * 0.1}s` }}>
-                                    <div 
-                                        onClick={() => navigateTo('detail', cat)} 
-                                        className="group relative border border-white/10 bg-[#0d0d0d] h-[500px] flex flex-col justify-end hover:border-white/30 transition-all duration-500 cursor-pointer overflow-hidden"
-                                    >
-                                        <div className="absolute inset-0 z-0 bg-[#111] flex items-center justify-center transition-transform duration-700 group-hover:scale-105">
-                                            <div className="w-64 h-64 border-2 border-gray-500/30 rotate-12 flex items-center justify-center p-8 text-center">
-                                                <span className="text-xl font-semibold italic uppercase tracking-tighter text-gray-500/40">PICK STICKER<br/>{cat.name}</span>
-                                            </div>
-                                            <div className="absolute top-4 right-4 text-[10px] uppercase tracking-widest text-gray-500/20">Authentic PICK Label</div>
-                                        </div>
-                                        <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
-                                        <div className="relative z-20 p-10 text-left">
-                                            <h3 className="text-3xl font-semibold mb-4 tracking-tighter uppercase">{cat.name}</h3>
-                                            <p className="text-sm opacity-60 mb-8 leading-tight">{cat.desc}</p>
-                                            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-tighter pt-4 border-t border-white/20">
-                                                Explore Collection <Icon name="chevron-right" size={14} />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </Reveal>
+                        </div>
+
+                        <div className="absolute -bottom-14 left-0 w-full flex justify-center gap-1.5">
+                            {categories.map((_, idx) => (
+                                <div key={idx} className={`h-1 rounded-full transition-all duration-300 ${idx === currentIndex ? 'w-10 bg-white' : 'w-2 bg-white/10'}`} />
                             ))}
                         </div>
                     </div>
                 );
             };
 
-            const DetailPage = ({ product }) => {
-                if (!product) return <Error404Page />;
-
-                return (
-                    <div className="pt-32 px-6 pb-40 max-w-7xl mx-auto text-left">
-                        <Reveal>
-                            <button onClick={() => navigateTo('products')} className="flex items-center gap-2 text-gray-500 hover:text-white mb-12 text-sm uppercase tracking-widest font-semibold">
-                                <Icon name="arrow-left" size={18} /> Back to Products
-                            </button>
-                        </Reveal>
-                        <div className="grid lg:grid-cols-2 gap-16 mb-16">
-                            <Reveal>
-                                <div className="aspect-square bg-[#111] border border-white/5 flex items-center justify-center relative overflow-hidden">
-                                    <div className="w-64 h-64 border-4 border-white/20 rotate-12 flex items-center justify-center p-8 text-center">
-                                        <span className="text-2xl font-semibold italic uppercase tracking-tighter">PICK STICKER<br/>{product.name}</span>
-                                    </div>
-                                    <div className="absolute top-4 right-4 text-[10px] uppercase tracking-widest opacity-30">Authentic PICK Label</div>
-                                </div>
-                            </Reveal>
-                            <Reveal style={{ transitionDelay: '0.2s' }}>
-                                <div className="flex flex-col justify-center">
-                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-4">Edition 0{product.id}</span>
-                                    <h1 className="text-5xl md:text-6xl font-semibold tracking-tighter mb-6 uppercase leading-none">{product.name}</h1>
-                                    <p className="text-xl text-gray-400 mb-10 leading-relaxed">{product.desc}</p>
-                                    <div className="space-y-6 mb-12 uppercase text-sm">
-                                        <div className="flex justify-between py-4 border-b border-white/10"><span className="text-gray-500 font-medium">Size</span><span>Mixed</span></div>
-                                        <div className="flex justify-between py-4 border-b border-white/10"><span className="text-gray-500 font-medium">Material</span><span>Waterproof Matte Vinyl</span></div>
-                                        <div className="flex justify-between py-4 border-b border-white/10"><span className="text-gray-500 font-medium">Price</span><span className="text-2xl font-semibold">₩18,000</span></div>
-                                    </div>
-                                    <button className="w-full bg-white text-black py-5 font-semibold uppercase tracking-widest hover:bg-gray-200 transition">BUY</button>
-                                </div>
-                            </Reveal>
-                        </div>
-                        <div className="mt-20">
-                            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-10 pb-4 border-b border-white/10">Detailed Views</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {[1, 2, 3, 4, 5].map(n => (
-                                    <div key={n} className={`bg-[#0d0d0d] border border-white/5 flex items-center justify-center text-gray-700 text-xs uppercase ${n === 4 ? 'aspect-[4/5] md:col-span-2' : 'aspect-square'}`}>Detail Shot 0{n}</div>
-                                ))}
+            const HomePage = () => (
+                <div className="bg-black">
+                    {/* Hero Section: 간격 축소 및 피킹 효과 유도 */}
+                    <section className="px-6 pt-32 pb-16 md:pt-48 md:pb-24 max-w-7xl mx-auto flex flex-col items-center text-center">
+                        <Reveal><h1 className="text-7xl md:text-[12rem] font-bold tracking-tighter leading-none mb-6 opacity-95 select-none">PICK</h1></Reveal>
+                        <Reveal style={{ transitionDelay: '0.2s' }}>
+                            <div className="max-w-2xl mt-6">
+                                <p className="text-lg md:text-2xl font-light leading-tight mb-6">Pick your variety,<br />stick your style.</p>
+                                <p className="text-gray-500 text-xs md:text-sm mb-10 tracking-wide">다양함을 Pick하고, 당신의 스타일을 붙이세요.</p>
+                                <button 
+                                    onClick={scrollToPreview} 
+                                    className="group flex items-center gap-2 mx-auto text-xs font-semibold uppercase tracking-[0.25em] text-gray-500 hover:text-white transition-all duration-300"
+                                >
+                                    <span className="underline underline-offset-8 decoration-gray-800 group-hover:decoration-white transition-colors">PREVIEW</span>
+                                    <ArrowDown className="mt-1 group-hover:translate-y-1 transition-transform" />
+                                </button>
                             </div>
+                        </Reveal>
+                    </section>
+
+                    {/* Intro Section: 간격 대폭 축소 */}
+                    <section className="px-6 py-16 md:py-24 border-t border-white/10 bg-[#0a0a0a]">
+                        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 text-left mb-24 md:mb-32">
+                            <Reveal><div className="space-y-4"><span className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">[ 01. Concept ]</span><h2 className="text-2xl md:text-3xl font-semibold leading-tight">당신의 개성을 표현하는<br />가장 작은 조각, 스티커.</h2><p className="text-gray-400 text-sm leading-relaxed">평범한 일상에 새로운 생명력을 불어넣고 자신의 취향을 공유하는 문화를 만듭니다.</p></div></Reveal>
+                            <Reveal style={{ transitionDelay: '0.2s' }}><div className="space-y-4"><span className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">[ 02. Quality ]</span><h2 className="text-2xl md:text-3xl font-semibold leading-tight">타협하지 않는 디테일과<br />지속 가능한 소재의 조화.</h2><p className="text-gray-400 text-sm leading-relaxed">고해상도 프린팅과 강력한 내구성으로 소중한 물건을 안전하고 아름답게 꾸며줍니다.</p></div></Reveal>
                         </div>
+                        
+                        {/* Interactive Section: 배경 통일 및 여백 최적화 */}
+                        <div ref={previewRef} className="max-w-4xl mx-auto text-center py-16 md:py-20 border-t border-white/5 bg-black">
+                            <Reveal><h2 className="text-[10px] font-semibold text-gray-500 uppercase tracking-[0.4em] mb-16">Interactive Preview</h2></Reveal>
+                            <StickerStack />
+
+                            <Reveal style={{ transitionDelay: '0.3s' }}>
+                                <button onClick={() => navigateTo('products')} className="group flex items-center gap-2.5 mx-auto text-[10px] font-bold uppercase tracking-[0.35em] border border-white px-5 py-6 hover:bg-white hover:text-black transition-all duration-300 mt-20 md:mt-24">
+                                    VIEW ALL PRODUCTS <ArrowRight size={20} className="group-hover:translate-x-1.5 transition-transform" />
+                                </button>
+                            </Reveal>
+                        </div>
+                    </section>
+                </div>
+            );
+
+            const ProductsPage = () => (
+                <div className="pt-24 px-6 pb-20 max-w-7xl mx-auto text-white bg-black">
+                    <Reveal><div className="mb-12 text-left pt-8"><h2 className="text-[10px] font-semibold text-gray-500 uppercase tracking-[0.3em] mb-2">Categories</h2><h1 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter">OUR VARIETY</h1></div></Reveal>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                        {categories.map((cat, idx) => (
+                            <Reveal key={cat.id} style={{ transitionDelay: `${(idx % 3) * 0.1}s` }}>
+                                <div onClick={() => navigateTo('detail', cat)} className="group relative border border-white/10 bg-[#0d0d0d] h-[400px] md:h-[450px] flex flex-col justify-end hover:border-white/30 transition-all duration-500 cursor-pointer overflow-hidden">
+                                    <div className="absolute inset-0 z-0 bg-[#111] flex items-center justify-center transition-transform duration-700 group-hover:scale-105">
+                                        <div className="w-48 h-48 border-2 border-gray-500/30 rotate-12 flex items-center justify-center p-8 text-center"><span className="text-lg font-semibold italic uppercase tracking-tighter text-gray-500/40">PICK STICKER<br/>{cat.name}</span></div>
+                                    </div>
+                                    <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                                    <div className="relative z-20 p-8 text-left">
+                                        <h3 className="text-2xl font-bold mb-2 uppercase tracking-tighter">{cat.name}</h3>
+                                        <p className="text-xs opacity-60 mb-6 leading-tight">coming soon...</p>
+                                        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-tighter pt-4 border-t border-white/20 w-max">Explore Collection <ArrowRight size={14} className="ml-1" /></div>
+                                    </div>
+                                </div>
+                            </Reveal>
+                        ))}
                     </div>
-                );
-            };
+                </div>
+            );
+
+            const DetailPage = ({ product }) => (
+                <div className="pt-24 px-6 pb-32 max-w-7xl mx-auto text-left bg-black">
+                    <Reveal><button onClick={() => navigateTo('products')} className="flex items-center gap-2 text-gray-500 hover:text-white mb-8 text-[10px] uppercase font-bold tracking-widest transition-colors pt-4">← Back to Products</button></Reveal>
+                    {!product ? <div className="py-20 text-4xl font-bold text-center">404</div> : (
+                        <>
+                            {/* 상단: 간격 좁게 조정 */}
+                            <div className="grid lg:grid-cols-2 gap-12 mb-16">
+                                <Reveal><div className="aspect-square bg-[#111] border border-white/5 flex items-center justify-center relative overflow-hidden shadow-2xl"><div className="w-56 h-56 border-4 border-white/20 rotate-12 flex items-center justify-center p-8 text-center shadow-2xl"><span className="text-xl font-semibold italic uppercase tracking-tighter text-white/40">PICK STICKER<br/>{product.name}</span></div></div></Reveal>
+                                <Reveal style={{ transitionDelay: '0.2s' }}>
+                                    <div className="flex flex-col justify-center">
+                                        <span className="text-[10px] font-semibold text-gray-500 mb-3 uppercase tracking-[0.3em]">Edition {product.id}</span>
+                                        <h1 className="text-4xl md:text-5xl font-bold mb-4 uppercase leading-none tracking-tighter">{product.name}</h1>
+                                        <p className="text-base text-gray-400 mb-8 leading-relaxed font-light">coming soon...</p>
+                                        <div className="space-y-4 mb-10 uppercase text-[10px] md:text-xs font-semibold tracking-wider">
+                                            <div className="flex justify-between py-3 border-b border-white/10 gap-4">
+                                                <span className="text-gray-500 shrink-0">PLACE</span>
+                                                <span className="text-right break-keep">서울특별시 양천구 목동로11길 46 서울영상고 영상동 2층 비전홀</span>
+                                            </div>
+                                            <div className="flex justify-between py-3 border-b border-white/10">
+                                                <span className="text-gray-500">Price</span>
+                                                <span className="text-xl font-bold">₩2,000</span>
+                                            </div>
+                                        </div>
+                                        <button 
+                                            onClick={() => setIsPopupOpen(true)}
+                                            className="w-full bg-white text-black py-4 font-bold uppercase tracking-[0.3em] hover:bg-gray-200 transition-all duration-300 text-xs"
+                                        >
+                                            BUY NOW
+                                        </button>
+                                    </div>
+                                </Reveal>
+                            </div>
+
+                            {/* 하단: 이미지 그리드 섹션 간격 축소 */}
+                            <Reveal>
+                                <div className="mt-12 border-t border-white/10 pt-12">
+                                    <h3 className="text-[9px] font-bold uppercase tracking-[0.4em] text-gray-500 mb-8">Gallery / Details</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+                                        <div className="aspect-[4/5] bg-[#0d0d0d] border border-white/5 flex items-center justify-center text-[9px] text-gray-700 uppercase tracking-widest font-medium">Image Slot 01</div>
+                                        <div className="aspect-[4/5] bg-[#0d0d0d] border border-white/5 flex items-center justify-center text-[9px] text-gray-700 uppercase tracking-widest font-medium">Image Slot 02</div>
+                                        <div className="aspect-[4/5] bg-[#0d0d0d] border border-white/5 flex items-center justify-center text-[9px] text-gray-700 uppercase tracking-widest font-medium">Image Slot 03</div>
+                                        <div className="aspect-[4/5] bg-[#0d0d0d] border border-white/5 flex items-center justify-center text-[9px] text-gray-700 uppercase tracking-widest font-medium">Image Slot 04</div>
+                                    </div>
+                                </div>
+                            </Reveal>
+                        </>
+                    )}
+                </div>
+            );
 
             return (
-                <div className="min-h-screen text-white">
+                <div className="min-h-screen text-white bg-black">
                     <Navbar />
-                    <main>
-                        {page === 'home' && <HomePage />}
-                        {page === 'products' && <ProductsPage />}
-                        {page === 'error' && <Error404Page />}
-                        {page === 'detail' && <DetailPage product={selectedProduct} />}
-                    </main>
-                    <footer className="border-t border-white/10 pt-20 pb-10 px-6 text-center">
+                    <main>{page === 'home' && <HomePage />}{page === 'products' && <ProductsPage />}{page === 'detail' && <DetailPage product={selectedProduct} />}</main>
+                    <footer className="border-t border-white/10 pt-16 pb-10 px-6 text-center mt-12 bg-black">
                         <Reveal>
-                            <div className="text-4xl font-semibold tracking-tighter mb-6 uppercase">PICK</div>
-                            <p className="text-gray-500 text-sm mb-10">다양함을 Pick하고, 당신의 스타일을 붙이세요.</p>
-                            <div className="flex justify-center mb-10">
-                                <a 
-                                    href="https://www.instagram.com/pick_official2026/" 
-                                    target="_blank" 
-                                    rel="noopener noreferrer" 
-                                    className="text-gray-500 hover:text-white transition"
-                                    aria-label="Instagram"
-                                >
-                                    <InstagramIcon size={32} />
-                                </a>
-                            </div>
-                            <div className="mt-20 pt-8 border-t border-white/5 text-[10px] text-gray-600 uppercase tracking-widest">
-                                <span 
-                                    onClick={() => navigateTo('error')}
-                                    className="cursor-default"
-                                >
-                                    © 2026 PICK BRAND.
-                                </span> All Rights Reserved.
-                            </div>
+                            <div className="text-3xl font-bold tracking-tighter mb-4 uppercase">PICK</div>
+                            <p className="text-gray-500 text-xs mb-8 font-light tracking-tight">다양함을 Pick하고, 당신의 스타일을 붙이세요.</p>
+                            <div className="flex justify-center mb-8"><a href="https://www.instagram.com/pick_official2026/" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-white transition-colors"><InstagramIcon size={24} /></a></div>
+                            <div className="mt-16 pt-8 border-t border-white/5 text-[9px] text-gray-600 uppercase tracking-[0.4em]">© 2026 PICK BRAND. All Rights Reserved.</div>
                         </Reveal>
                     </footer>
+                    {isPopupOpen && <PurchasePopup />}
                 </div>
             );
         }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
 </html>

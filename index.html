@@ -142,7 +142,34 @@
             const [isPopupOpen, setIsPopupOpen] = useState(false);
             const [scrollProgress, setScrollProgress] = useState(0);
 
+            // URL Hash와 페이지 상태 동기화
+            const syncPageWithHash = useCallback(() => {
+                const hash = window.location.hash;
+                if (!hash || hash === '#/' || hash === '#/home') {
+                    setPage('home');
+                    setSelectedProduct(null);
+                } else if (hash === '#/products') {
+                    setPage('products');
+                    setSelectedProduct(null);
+                } else if (hash.startsWith('#/products/detail/')) {
+                    const idStr = hash.split('/').pop();
+                    const id = parseInt(idStr);
+                    const p = categories.find(c => c.id === id);
+                    if (p) {
+                        setPage('detail');
+                        setSelectedProduct(p);
+                    } else {
+                        setPage('home');
+                        setSelectedProduct(null);
+                    }
+                }
+                window.scrollTo(0, 0);
+            }, []);
+
             useEffect(() => {
+                syncPageWithHash();
+                window.addEventListener('hashchange', syncPageWithHash);
+
                 const handleScroll = () => {
                     const scrollY = window.scrollY;
                     const section = document.getElementById('scrolly-section');
@@ -154,20 +181,26 @@
                     }
                 };
                 window.addEventListener('scroll', handleScroll);
-                return () => window.removeEventListener('scroll', handleScroll);
-            }, []);
 
+                return () => {
+                    window.removeEventListener('hashchange', syncPageWithHash);
+                    window.removeEventListener('scroll', handleScroll);
+                };
+            }, [syncPageWithHash]);
+
+            // 클릭 시 Hash 변경 (URL 반영)
             const navigateTo = (p, data = null) => {
-                window.scrollTo(0, 0);
-                setPage(p);
-                setSelectedProduct(data);
+                let target = '#/home';
+                if (p === 'products') target = '#/products';
+                else if (p === 'detail' && data) target = `#/products/detail/0${data.id}`;
+                window.location.hash = target;
             };
 
             const PurchasePopup = () => (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 popup-overlay bg-white/70 backdrop-blur-3xl" onClick={() => setIsPopupOpen(false)}>
                     <button className="absolute top-10 right-10 text-[#1d1d1f] hover:opacity-50 transition"><XIcon /></button>
                     <div className="max-w-3xl text-center px-10" onClick={(e) => e.stopPropagation()}>
-                        <h2 className="text-3xl md:text-5xl font-semibold leading-tight tracking-tight mb-12 break-keep text-[#1d1d1f]">
+                        <h2 className="text-3xl md:text-5xl font-semibold leading-tight tracking-tight mb-12 break-keep">
                             서울영상고등학교 영상동 2F 비전홀 <br className="hidden md:block" /> 전자상거래 PICK 부스에서 현장 구매해 주세요!
                         </h2>
                         <button className="bg-black text-white px-12 py-4 rounded-full text-sm font-medium hover:bg-gray-800 transition-all" onClick={() => setIsPopupOpen(false)}>닫기</button>
@@ -175,7 +208,6 @@
                 </div>
             );
 
-            // 여백이 보강된 상단 고정 네비게이션
             const Navbar = () => (
                 <nav className="fixed top-0 left-0 w-full z-50 bg-white/70 backdrop-blur-md border-b border-gray-100 px-12 md:px-24 py-6 flex justify-between items-center">
                     <div className="text-xl font-semibold tracking-tighter cursor-pointer select-none" onClick={() => navigateTo('home')}>PICK</div>
@@ -187,7 +219,6 @@
                 </nav>
             );
 
-            // 경로 표시기 컴포넌트
             const PathIndicator = ({ path }) => (
                 <div className="text-[10px] font-medium text-gray-300 uppercase tracking-[0.4em] mb-6 select-none">
                     {path}
@@ -308,7 +339,6 @@
                 <div className="bg-white min-h-screen pt-40 pb-32 px-12 md:px-24">
                     <div className="max-w-7xl mx-auto">
                         <Reveal>
-                            {/* 선택된 제품 번호를 반영하여 경로 동적 생성 */}
                             <PathIndicator path={`/products/detail/0${product?.id || '?'}`} />
                         </Reveal>
                         <button onClick={() => navigateTo('products')} className="flex items-center gap-2 text-[#86868b] hover:text-black mb-20 text-xs font-semibold uppercase tracking-widest transition-colors mt-8">

@@ -308,7 +308,8 @@
                 <div className="bg-white min-h-screen pt-40 pb-32 px-12 md:px-24">
                     <div className="max-w-7xl mx-auto">
                         <Reveal>
-                            <PathIndicator path="/products/detail" />
+                            {/* 선택된 제품 번호를 반영하여 경로 동적 생성 */}
+                            <PathIndicator path={`/products/detail/0${product?.id || '?'}`} />
                         </Reveal>
                         <button onClick={() => navigateTo('products')} className="flex items-center gap-2 text-[#86868b] hover:text-black mb-20 text-xs font-semibold uppercase tracking-widest transition-colors mt-8">
                             <ArrowRight size={14} className="rotate-180" /> 목록으로 돌아가기

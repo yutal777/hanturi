@@ -149,6 +149,7 @@
             const videoRef = useRef(null);
             const canvasRef = useRef(null);
             const targetTimeRef = useRef(0);
+            const lastRenderedTimeRef = useRef(-1);
             const rafIdRef = useRef(null);
 
             const syncPageWithHash = useCallback(() => {
@@ -184,14 +185,14 @@
                         if (scrollHeight > 0) {
                             const progress = Math.max(0, Math.min(1, scrollPos / scrollHeight));
                             if (videoRef.current && videoRef.current.duration) {
-                                // [기술 제약 1: 이벤트 분리] targetTimeRef만 업데이트
+                                // [기술 제약 1] Decoupling: targetTimeRef만 업데이트
                                 targetTimeRef.current = progress * videoRef.current.duration;
                             }
                         }
                     }
                 };
 
-                // [기술 제약 2: 렌더링 루프] requestAnimationFrame 내에서 처리
+                // [기술 제약 2] Render Loop
                 const renderLoop = () => {
                     const video = videoRef.current;
                     const canvas = canvasRef.current;
@@ -199,45 +200,50 @@
                     if (video && canvas && video.readyState >= 2) {
                         const ctx = canvas.getContext('2d', { alpha: false });
                         
-                        // [기술 제약 3: 병목 방지] seeking 조건 확인
+                        // [기술 제약 3] Seeking Guard: 비디오 디코딩 병목 방지
                         if (!video.seeking) {
-                            const timeDiff = Math.abs(video.currentTime - targetTimeRef.current);
-                            if (timeDiff > 0.001) { 
-                                video.currentTime = targetTimeRef.current;
+                            const timeToSeek = targetTimeRef.current;
+                            const diff = Math.abs(video.currentTime - timeToSeek);
+
+                            // 임계값을 약 1프레임 간격(0.03초)으로 설정하여 디코더 과부하 방지
+                            if (diff > 0.03) { 
+                                video.currentTime = timeToSeek;
                             }
                             
-                            // 화질 최적화
-                            ctx.imageSmoothingEnabled = true;
-                            ctx.imageSmoothingQuality = 'high';
-                            
-                            // 비디오 프레임 그리기
-                            const vWidth = video.videoWidth;
-                            const vHeight = video.videoHeight;
-                            const cWidth = canvas.width;
-                            const cHeight = canvas.height;
-                            const vRatio = vWidth / vHeight;
-                            const cRatio = cWidth / cHeight;
-                            
-                            let sWidth, sHeight, sx, sy;
-                            if (vRatio > cRatio) {
-                                sHeight = vHeight;
-                                sWidth = vHeight * cRatio;
-                                sx = (vWidth - sWidth) / 2;
-                                sy = 0;
-                            } else {
-                                sWidth = vWidth;
-                                sHeight = vWidth / cRatio;
-                                sx = 0;
-                                sy = (vHeight - sHeight) / 2;
+                            // 실제 렌더링: 비디오 시간과 마지막 렌더링 시간이 다를 때만 수행
+                            if (lastRenderedTimeRef.current !== video.currentTime) {
+                                ctx.imageSmoothingEnabled = true;
+                                ctx.imageSmoothingQuality = 'high';
+                                
+                                const vWidth = video.videoWidth;
+                                const vHeight = video.videoHeight;
+                                const cWidth = canvas.width;
+                                const cHeight = canvas.height;
+                                const vRatio = vWidth / vHeight;
+                                const cRatio = cWidth / cHeight;
+                                
+                                let sWidth, sHeight, sx, sy;
+                                if (vRatio > cRatio) {
+                                    sHeight = vHeight;
+                                    sWidth = vHeight * cRatio;
+                                    sx = (vWidth - sWidth) / 2;
+                                    sy = 0;
+                                } else {
+                                    sWidth = vWidth;
+                                    sHeight = vWidth / cRatio;
+                                    sx = 0;
+                                    sy = (vHeight - sHeight) / 2;
+                                }
+                                
+                                ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, cWidth, cHeight);
+                                lastRenderedTimeRef.current = video.currentTime;
                             }
-                            
-                            ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, cWidth, cHeight);
                         }
                     }
                     rafIdRef.current = requestAnimationFrame(renderLoop);
                 };
 
-                window.addEventListener('scroll', handleScroll);
+                window.addEventListener('scroll', handleScroll, { passive: true });
                 rafIdRef.current = requestAnimationFrame(renderLoop);
 
                 return () => {
@@ -247,7 +253,7 @@
                 };
             }, [syncPageWithHash]);
 
-            // 해상도 조절 (Retina 대응)
+            // 해상도 조절 로직 (DPR 반영으로 화질 저하 해결)
             useEffect(() => {
                 const canvas = canvasRef.current;
                 const updateCanvasSize = () => {
@@ -255,6 +261,7 @@
                     const dpr = window.devicePixelRatio || 1;
                     canvas.width = window.innerWidth * dpr;
                     canvas.height = window.innerHeight * dpr;
+                    lastRenderedTimeRef.current = -1; // 사이즈 변경 시 재렌더링 강제
                 };
 
                 updateCanvasSize();
@@ -326,7 +333,6 @@
                     <section id="scrolly-section" className="scrolly-background-section bg-white">
                         <div className="sticky-canvas-area">
                             <canvas ref={canvasRef} className="scrolly-video-canvas" />
-                            {/* 깃허브 로컬 파일 경로 적용 */}
                             <video 
                                 ref={videoRef}
                                 src="Comp%201.webm" 

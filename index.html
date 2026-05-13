@@ -90,7 +90,7 @@
     <script type="text/babel">
         const { useState, useEffect, useCallback, useRef, memo } = React;
 
-        // --- Shared Intersection Observer for animations ---
+        // --- 공용 Observer (애니메이션 최적화) ---
         const globalObserver = typeof IntersectionObserver !== 'undefined' 
             ? new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
@@ -102,7 +102,7 @@
             }, { threshold: 0.1 })
             : null;
 
-        // --- SVG Icons ---
+        // --- Icons ---
         const ArrowRight = memo(({ size = 16, className = "" }) => (
             <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
                 <line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline>
@@ -135,7 +135,7 @@
             </svg>
         ));
 
-        // --- Data Definitions ---
+        // --- Data ---
         const CATEGORIES = [
             { id: 1, name: 'Edition 01', price: '₩2,000' },
             { id: 2, name: 'Edition 02', price: '₩2,000' },
@@ -166,7 +166,7 @@
             return <div ref={ref} className={`reveal ${className}`}>{children}</div>;
         });
 
-        // --- UI Components ---
+        // --- Core UI Components ---
         const Navbar = memo(({ page, navigateTo, setIsPopupOpen, isMenuOpen, setIsMenuOpen }) => (
             <nav className="fixed top-0 left-0 w-full z-[80] bg-white/70 backdrop-blur-md border-b border-gray-100 px-6 md:px-24 py-5 flex justify-between items-center">
                 <div className="text-xl font-semibold tracking-tighter cursor-pointer select-none" onClick={() => navigateTo('#/home')}>PICK</div>
@@ -358,6 +358,7 @@
             const [isPopupOpen, setIsPopupOpen] = useState(false);
             const [isMenuOpen, setIsMenuOpen] = useState(false);
             
+            // 핵심 퍼포먼스 Ref (리액트 렌더링 루프를 우회함)
             const videoRef = useRef(null);
             const canvasRef = useRef(null);
             const targetTimeRef = useRef(0);
@@ -389,8 +390,9 @@
                 syncPageWithHash();
                 window.addEventListener('hashchange', syncPageWithHash);
                 
+                // 최적화된 스크롤 핸들러: 리액트 상태 업데이트를 호출하지 않음
                 const handleScroll = () => {
-                    if (page !== 'home') return;
+                    if (!isVideoSectionVisible.current) return;
                     const section = document.getElementById('scrolly-section');
                     if (section) {
                         const rect = section.getBoundingClientRect();
@@ -400,13 +402,13 @@
                         if (scrollHeight > 0) {
                             const progress = Math.max(0, Math.min(1, scrollPos / scrollHeight));
                             if (videoRef.current && videoRef.current.duration) {
-                                // Principle 1: Decoupling - Only update the variable
                                 targetTimeRef.current = progress * videoRef.current.duration;
                             }
                         }
                     }
                 };
 
+                // 프레임 렌더링 로직
                 const performDraw = () => {
                     const video = videoRef.current;
                     const canvas = canvasRef.current;
@@ -414,16 +416,15 @@
 
                     const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
                     
-                    // Principle 3: Seeking Guard - Prevent decoder clogging
                     if (!video.seeking) {
                         const timeToSeek = targetTimeRef.current;
                         const diff = Math.abs(video.currentTime - timeToSeek);
 
-                        if (diff > 0.03) { // Threshold for instant but throttled update
+                        if (diff > 0.033) { // 약 30fps 임계값으로 디코더 부하 방지
                             video.currentTime = timeToSeek;
                         }
                         
-                        // Quality Guard: Maintain high quality image smoothing
+                        // 비디오 시간이 실제로 이동했을 때만 캔버스 갱신
                         if (lastRenderedTimeRef.current !== video.currentTime) {
                             ctx.imageSmoothingEnabled = true;
                             ctx.imageSmoothingQuality = 'high';
@@ -435,7 +436,6 @@
                     }
                 };
 
-                // Principle 2: Render Loop - Optimized with requestVideoFrameCallback if available
                 const renderLoop = () => {
                     if (isVideoSectionVisible.current) {
                         performDraw();
@@ -443,7 +443,7 @@
                     rafIdRef.current = requestAnimationFrame(renderLoop);
                 };
 
-                // Advanced performance: requestVideoFrameCallback syncs with video decoder
+                // 브라우저가 지원하면 비디오 전용 콜백 사용 (프레임 드랍 획기적 감소)
                 let rvfcId;
                 if (videoRef.current && 'requestVideoFrameCallback' in HTMLVideoElement.prototype) {
                     const videoCallback = () => {
@@ -464,7 +464,7 @@
                 };
             }, [syncPageWithHash, page]);
 
-            // Handling Resolution and Visibility (Performance optimization)
+            // 고화질 및 가시성 최적화
             useEffect(() => {
                 const canvas = canvasRef.current;
                 const video = videoRef.current;
@@ -473,8 +473,8 @@
                 const updateSize = () => {
                     if (!canvas || !video || !video.videoWidth) return;
                     
-                    // Maintain Quality: Calculate size with devicePixelRatio for Retina support
-                    const dpr = Math.min(window.devicePixelRatio || 1, 2); // Cap at 2 for performance
+                    // 화질 극대화: 픽셀 밀도 반영 (성능을 위해 최대 2배로 제한)
+                    const dpr = Math.min(window.devicePixelRatio || 1, 2);
                     canvas.width = window.innerWidth * dpr;
                     canvas.height = window.innerHeight * dpr;
 
@@ -501,6 +501,8 @@
 
                 const sectionObserver = new IntersectionObserver(([entry]) => {
                     isVideoSectionVisible.current = entry.isIntersecting;
+                    // 섹션 진입 시 사이즈 재조정
+                    if (entry.isIntersecting) updateSize();
                 }, { threshold: 0 });
 
                 if (section) sectionObserver.observe(section);

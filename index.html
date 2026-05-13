@@ -34,7 +34,12 @@
         .font-medium { font-weight: 500; }
         .font-normal { font-weight: 400; }
 
-        .reveal { opacity: 0; transform: translateY(20px); transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
+        .reveal { 
+            opacity: 0; 
+            transform: translateY(20px); 
+            transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1); 
+            will-change: transform, opacity;
+        }
         .reveal.active { opacity: 1; transform: translateY(0); }
 
         .scrolly-background-section {
@@ -54,7 +59,7 @@
         }
 
         .popup-overlay {
-            animation: appleFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: appleFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
         @keyframes appleFadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -68,6 +73,8 @@
             height: 100vh;
             object-fit: cover;
             display: block;
+            /* 고화질 렌더링 유지 */
+            image-rendering: auto;
         }
     </style>
 </head>
@@ -75,41 +82,54 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useCallback, useRef } = React;
+        const { useState, useEffect, useCallback, useRef, memo } = React;
+
+        // --- 공유 Observer (효율적인 애니메이션 실행) ---
+        const globalObserver = typeof IntersectionObserver !== 'undefined' 
+            ? new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                        globalObserver.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 })
+            : null;
 
         // --- Icons ---
-        const ArrowRight = ({ size = 16, className = "" }) => (
+        const ArrowRight = memo(({ size = 16, className = "" }) => (
             <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
                 <line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline>
             </svg>
-        );
+        ));
 
-        const MenuIcon = ({ size = 24 }) => (
+        const MenuIcon = memo(({ size = 24 }) => (
             <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
-        );
+        ));
 
-        const XIcon = ({ size = 24 }) => (
+        const XIcon = memo(({ size = 24 }) => (
             <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
-        );
+        ));
 
-        const CheckIcon = ({ size = 16, className = "" }) => (
+        const CheckIcon = memo(({ size = 16, className = "" }) => (
             <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
                 <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
-        );
+        ));
 
-        const InstagramIcon = ({ size = 24 }) => (
+        const InstagramIcon = memo(({ size = 24 }) => (
             <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
                 <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
                 <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
             </svg>
-        );
+        ));
 
+        // --- 데이터 ---
         const CATEGORIES = [
             { id: 1, name: 'Edition 01', price: '₩2,000' },
             { id: 2, name: 'Edition 02', price: '₩2,000' },
@@ -124,21 +144,20 @@
             { title: '풀세트 소장', subtitle: '5 Pieces', price: '₩10,000', features: ['전 에디션 5종 소장', '장당 2,000원', '만원 한 장의 깔끔한 결제'], tag: 'Best Value', highlight: false }
         ];
 
-        const PathIndicator = ({ path }) => (
+        const PathIndicator = memo(({ path }) => (
             <div className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.4em] mb-6 select-none">
                 {path}
             </div>
-        );
+        ));
 
-        const Reveal = ({ children, className = "" }) => {
+        const Reveal = memo(({ children, className = "" }) => {
             const ref = useRef(null);
             useEffect(() => {
-                const observer = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) entry.target.classList.add('active'); }, { threshold: 0.1 });
-                if (ref.current) observer.observe(ref.current);
-                return () => observer.disconnect();
+                if (ref.current && globalObserver) globalObserver.observe(ref.current);
+                return () => { if (ref.current && globalObserver) globalObserver.unobserve(ref.current); };
             }, []);
             return <div ref={ref} className={`reveal ${className}`}>{children}</div>;
-        };
+        });
 
         function App() {
             const [page, setPage] = useState('home');
@@ -151,6 +170,8 @@
             const targetTimeRef = useRef(0);
             const lastRenderedTimeRef = useRef(-1);
             const rafIdRef = useRef(null);
+            const isVideoSectionVisible = useRef(false);
+            const drawRectRef = useRef({ sx: 0, sy: 0, sWidth: 0, sHeight: 0 });
 
             const syncPageWithHash = useCallback(() => {
                 const hash = window.location.hash;
@@ -176,6 +197,7 @@
                 window.addEventListener('hashchange', syncPageWithHash);
                 
                 const handleScroll = () => {
+                    if (page !== 'home') return;
                     const section = document.getElementById('scrolly-section');
                     if (section) {
                         const rect = section.getBoundingClientRect();
@@ -185,58 +207,40 @@
                         if (scrollHeight > 0) {
                             const progress = Math.max(0, Math.min(1, scrollPos / scrollHeight));
                             if (videoRef.current && videoRef.current.duration) {
-                                // [기술 제약 1] Decoupling: targetTimeRef만 업데이트
+                                // [기술 제약 1] Decoupling: 스크롤 이벤트에서는 값만 업데이트
                                 targetTimeRef.current = progress * videoRef.current.duration;
                             }
                         }
                     }
                 };
 
-                // [기술 제약 2] Render Loop
                 const renderLoop = () => {
-                    const video = videoRef.current;
-                    const canvas = canvasRef.current;
-                    
-                    if (video && canvas && video.readyState >= 2) {
-                        const ctx = canvas.getContext('2d', { alpha: false });
+                    if (isVideoSectionVisible.current) {
+                        const video = videoRef.current;
+                        const canvas = canvasRef.current;
                         
-                        // [기술 제약 3] Seeking Guard: 비디오 디코딩 병목 방지
-                        if (!video.seeking) {
-                            const timeToSeek = targetTimeRef.current;
-                            const diff = Math.abs(video.currentTime - timeToSeek);
-
-                            // 임계값을 약 1프레임 간격(0.03초)으로 설정하여 디코더 과부하 방지
-                            if (diff > 0.03) { 
-                                video.currentTime = timeToSeek;
-                            }
+                        if (video && canvas && video.readyState >= 2) {
+                            const ctx = canvas.getContext('2d', { alpha: false });
                             
-                            // 실제 렌더링: 비디오 시간과 마지막 렌더링 시간이 다를 때만 수행
-                            if (lastRenderedTimeRef.current !== video.currentTime) {
-                                ctx.imageSmoothingEnabled = true;
-                                ctx.imageSmoothingQuality = 'high';
-                                
-                                const vWidth = video.videoWidth;
-                                const vHeight = video.videoHeight;
-                                const cWidth = canvas.width;
-                                const cHeight = canvas.height;
-                                const vRatio = vWidth / vHeight;
-                                const cRatio = cWidth / cHeight;
-                                
-                                let sWidth, sHeight, sx, sy;
-                                if (vRatio > cRatio) {
-                                    sHeight = vHeight;
-                                    sWidth = vHeight * cRatio;
-                                    sx = (vWidth - sWidth) / 2;
-                                    sy = 0;
-                                } else {
-                                    sWidth = vWidth;
-                                    sHeight = vWidth / cRatio;
-                                    sx = 0;
-                                    sy = (vHeight - sHeight) / 2;
+                            // [기술 제약 3] Seeking Guard: 디코더 병목 방지
+                            if (!video.seeking) {
+                                const timeToSeek = targetTimeRef.current;
+                                const diff = Math.abs(video.currentTime - timeToSeek);
+
+                                // 반응성을 위해 최소 임계값 유지
+                                if (diff > 0.01) { 
+                                    video.currentTime = timeToSeek;
                                 }
                                 
-                                ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, cWidth, cHeight);
-                                lastRenderedTimeRef.current = video.currentTime;
+                                // 화질 최우선 설정 적용
+                                if (lastRenderedTimeRef.current !== video.currentTime) {
+                                    ctx.imageSmoothingEnabled = true;
+                                    ctx.imageSmoothingQuality = 'high'; // 최고 화질 설정
+                                    
+                                    const { sx, sy, sWidth, sHeight } = drawRectRef.current;
+                                    ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+                                    lastRenderedTimeRef.current = video.currentTime;
+                                }
                             }
                         }
                     }
@@ -251,34 +255,68 @@
                     window.removeEventListener('scroll', handleScroll);
                     if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
                 };
-            }, [syncPageWithHash]);
+            }, [syncPageWithHash, page]);
 
-            // 해상도 조절 로직 (DPR 반영으로 화질 저하 해결)
+            // 고화질 대응 (DPR 기반 캔버스 사이즈 조절)
             useEffect(() => {
                 const canvas = canvasRef.current;
-                const updateCanvasSize = () => {
-                    if (!canvas) return;
+                const video = videoRef.current;
+                const section = document.getElementById('scrolly-section');
+
+                const updateSize = () => {
+                    if (!canvas || !video || !video.videoWidth) return;
+                    
                     const dpr = window.devicePixelRatio || 1;
                     canvas.width = window.innerWidth * dpr;
                     canvas.height = window.innerHeight * dpr;
-                    lastRenderedTimeRef.current = -1; // 사이즈 변경 시 재렌더링 강제
+
+                    const vWidth = video.videoWidth;
+                    const vHeight = video.videoHeight;
+                    const cWidth = canvas.width;
+                    const cHeight = canvas.height;
+                    const vRatio = vWidth / vHeight;
+                    const cRatio = cWidth / cHeight;
+                    
+                    if (vRatio > cRatio) {
+                        drawRectRef.current.sHeight = vHeight;
+                        drawRectRef.current.sWidth = vHeight * cRatio;
+                        drawRectRef.current.sx = (vWidth - drawRectRef.current.sWidth) / 2;
+                        drawRectRef.current.sy = 0;
+                    } else {
+                        drawRectRef.current.sWidth = vWidth;
+                        drawRectRef.current.sHeight = vWidth / cRatio;
+                        drawRectRef.current.sx = 0;
+                        drawRectRef.current.sy = (vHeight - drawRectRef.current.sHeight) / 2;
+                    }
+                    lastRenderedTimeRef.current = -1;
                 };
 
-                updateCanvasSize();
-                window.addEventListener('resize', updateCanvasSize);
-                return () => window.removeEventListener('resize', updateCanvasSize);
+                const sectionObserver = new IntersectionObserver(([entry]) => {
+                    isVideoSectionVisible.current = entry.isIntersecting;
+                }, { threshold: 0 });
+
+                if (section) sectionObserver.observe(section);
+                if (video) video.addEventListener('loadedmetadata', updateSize);
+                window.addEventListener('resize', updateSize, { passive: true });
+                updateSize();
+
+                return () => {
+                    if (section) sectionObserver.disconnect();
+                    video?.removeEventListener('loadedmetadata', updateSize);
+                    window.removeEventListener('resize', updateSize);
+                };
             }, []);
 
             useEffect(() => {
                 document.body.style.overflow = isMenuOpen ? 'hidden' : 'unset';
             }, [isMenuOpen]);
 
-            const navigateTo = (target) => {
+            const navigateTo = useCallback((target) => {
                 window.location.hash = target;
                 setIsMenuOpen(false);
-            };
+            }, []);
 
-            const Navbar = () => (
+            const Navbar = memo(() => (
                 <nav className="fixed top-0 left-0 w-full z-[80] bg-white/70 backdrop-blur-md border-b border-gray-100 px-6 md:px-24 py-5 flex justify-between items-center">
                     <div className="text-xl font-semibold tracking-tighter cursor-pointer select-none" onClick={() => navigateTo('#/home')}>PICK</div>
                     <div className="hidden md:flex items-center gap-12 text-sm font-medium">
@@ -301,11 +339,11 @@
                         </div>
                     )}
                 </nav>
-            );
+            ));
 
-            const PurchasePopup = () => (
+            const PurchasePopup = memo(() => (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-white/70 backdrop-blur-3xl animate-in fade-in" onClick={() => setIsPopupOpen(false)}>
-                    <button className="absolute top-10 right-10 text-black hover:opacity-50 transition"><XIcon size={32} /></button>
+                    <button className="absolute top-10 right-10 text-black hover:opacity-50 transition" onClick={() => setIsPopupOpen(false)}><XIcon size={32} /></button>
                     <div className="max-w-3xl text-center px-10" onClick={(e) => e.stopPropagation()}>
                         <h2 className="text-2xl md:text-5xl font-semibold leading-tight tracking-tight mb-12 break-keep text-[#1d1d1f]">
                             서울영상고등학교 영상동 2F 비전홀 <br className="hidden md:block" /> 전자상거래 PICK 부스에서 현장 구매해 주세요!
@@ -313,7 +351,7 @@
                         <button className="bg-black text-white px-12 py-4 rounded-full text-sm font-medium hover:bg-gray-800 transition-all shadow-xl active:scale-[0.98]" onClick={() => setIsPopupOpen(false)}>닫기</button>
                     </div>
                 </div>
-            );
+            ));
 
             const HomePage = () => (
                 <div className="bg-white">
@@ -332,6 +370,7 @@
                     
                     <section id="scrolly-section" className="scrolly-background-section bg-white">
                         <div className="sticky-canvas-area">
+                            {/* 고해상도 드로잉 전용 캔버스 */}
                             <canvas ref={canvasRef} className="scrolly-video-canvas" />
                             <video 
                                 ref={videoRef}
@@ -463,7 +502,7 @@
             );
 
             return (
-                <div className="min-h-screen bg-white">
+                <div className="min-h-screen bg-white overflow-x-hidden">
                     <Navbar />
                     <main>
                         {page === 'home' && <HomePage />}

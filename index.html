@@ -20,14 +20,20 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style>
+        /* overflow-x: hidden은 body에만 적용하여 sticky 컨텍스트를 보호합니다. */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            background-color: white;
+            color: #1d1d1f;
+            -webkit-font-smoothing: antialiased;
+        }
+
         body { 
             font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; 
-            background-color: white; 
-            color: #1d1d1f; 
-            margin: 0; 
-            overflow-x: hidden; 
+            overflow-x: hidden;
             scroll-behavior: smooth;
-            -webkit-font-smoothing: antialiased;
         }
         
         .font-semibold { font-weight: 600; }
@@ -42,20 +48,23 @@
         }
         .reveal.active { opacity: 1; transform: translateY(0); }
 
+        /* 스크롤 고정 영역 핵심 CSS */
         .scrolly-background-section {
             height: 400vh;
             position: relative;
+            z-index: 1;
         }
         .sticky-canvas-area {
             position: sticky;
             top: 0;
+            left: 0;
             height: 100vh;
             width: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 0;
             overflow: hidden;
+            background-color: white;
         }
 
         .popup-overlay {
@@ -73,8 +82,6 @@
             height: 100vh;
             object-fit: cover;
             display: block;
-            /* 고화질 렌더링 유지 */
-            image-rendering: auto;
         }
     </style>
 </head>
@@ -84,7 +91,7 @@
     <script type="text/babel">
         const { useState, useEffect, useCallback, useRef, memo } = React;
 
-        // --- 공유 Observer (효율적인 애니메이션 실행) ---
+        // --- 공유 Observer ---
         const globalObserver = typeof IntersectionObserver !== 'undefined' 
             ? new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
@@ -129,7 +136,7 @@
             </svg>
         ));
 
-        // --- 데이터 ---
+        // --- Data ---
         const CATEGORIES = [
             { id: 1, name: 'Edition 01', price: '₩2,000' },
             { id: 2, name: 'Edition 02', price: '₩2,000' },
@@ -159,6 +166,192 @@
             return <div ref={ref} className={`reveal ${className}`}>{children}</div>;
         });
 
+        // --- 컴포넌트 ---
+        const Navbar = memo(({ page, navigateTo, setIsPopupOpen, isMenuOpen, setIsMenuOpen }) => (
+            <nav className="fixed top-0 left-0 w-full z-[80] bg-white/70 backdrop-blur-md border-b border-gray-100 px-6 md:px-24 py-5 flex justify-between items-center">
+                <div className="text-xl font-semibold tracking-tighter cursor-pointer select-none" onClick={() => navigateTo('#/home')}>PICK</div>
+                <div className="hidden md:flex items-center gap-12 text-sm font-medium">
+                    <button onClick={() => navigateTo('#/home')} className={`transition-colors ${page === 'home' ? 'text-black' : 'text-gray-400 hover:text-black'}`}>Home</button>
+                    <button onClick={() => navigateTo('#/products')} className={`transition-colors ${page === 'products' ? 'text-black' : 'text-gray-400 hover:text-black'}`}>Products</button>
+                    <button onClick={() => setIsPopupOpen(true)} className="bg-black text-white px-6 py-2 rounded-full text-[11px] font-semibold tracking-wider hover:bg-gray-800 transition-all">BUY</button>
+                </div>
+                <div className="md:hidden">
+                    <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-black p-1 relative z-[90]">
+                        {isMenuOpen ? <XIcon size={24} /> : <MenuIcon size={24} />}
+                    </button>
+                </div>
+                {isMenuOpen && (
+                    <div className="fixed inset-0 z-[70] pt-[80px] bg-white/95 backdrop-blur-3xl p-8 flex flex-col h-screen">
+                        <div className="flex flex-col gap-10 text-4xl font-semibold tracking-tighter">
+                            <button onClick={() => navigateTo('#/home')} className={page === 'home' ? 'text-black' : 'text-gray-300'}>Home</button>
+                            <button onClick={() => navigateTo('#/products')} className={page === 'products' ? 'text-black' : 'text-gray-300'}>Products</button>
+                        </div>
+                        <button onClick={() => { setIsPopupOpen(true); setIsMenuOpen(false); }} className="mt-auto w-full bg-black text-white py-5 rounded-2xl font-semibold text-lg shadow-xl active:scale-[0.98]">BUY NOW</button>
+                    </div>
+                )}
+            </nav>
+        ));
+
+        const PurchasePopup = memo(({ setIsPopupOpen }) => (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-white/70 backdrop-blur-3xl animate-in fade-in" onClick={() => setIsPopupOpen(false)}>
+                <button className="absolute top-10 right-10 text-black hover:opacity-50 transition" onClick={() => setIsPopupOpen(false)}><XIcon size={32} /></button>
+                <div className="max-w-3xl text-center px-10" onClick={(e) => e.stopPropagation()}>
+                    <h2 className="text-2xl md:text-5xl font-semibold leading-tight tracking-tight mb-12 break-keep text-[#1d1d1f]">
+                        서울영상고등학교 영상동 2F 비전홀 <br className="hidden md:block" /> 전자상거래 PICK 부스에서 현장 구매해 주세요!
+                    </h2>
+                    <button className="bg-black text-white px-12 py-4 rounded-full text-sm font-medium hover:bg-gray-800 transition-all shadow-xl active:scale-[0.98]" onClick={() => setIsPopupOpen(false)}>닫기</button>
+                </div>
+            </div>
+        ));
+
+        const HomePage = memo(({ canvasRef, videoRef, navigateTo }) => (
+            <div className="bg-white">
+                <section className="h-screen w-full relative flex flex-col items-center overflow-hidden">
+                    <div className="absolute inset-0 bg-[#f5f5f7] z-0"></div>
+                    <div className="z-10 text-center pt-48 px-6 md:px-24 max-w-7xl mx-auto">
+                        <Reveal>
+                            <PathIndicator path="/home" />
+                            <h1 className="text-4xl md:text-7xl font-semibold tracking-tight leading-tight mb-4 text-[#1d1d1f]">나답게, 남다르게.</h1>
+                        </Reveal>
+                        <Reveal>
+                            <p className="text-[#86868b] text-base md:text-xl font-medium tracking-tight">Be myself, Be different.</p>
+                        </Reveal>
+                    </div>
+                </section>
+                
+                <section id="scrolly-section" className="scrolly-background-section bg-white">
+                    <div className="sticky-canvas-area">
+                        <canvas ref={canvasRef} className="scrolly-video-canvas" />
+                        <video 
+                            ref={videoRef}
+                            src="Comp%201.webm" 
+                            style={{ display: 'none' }}
+                            muted playsInline preload="auto"
+                        />
+                        <div className="absolute bottom-20 left-0 w-full text-center pointer-events-none">
+                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-[0.6em] animate-pulse drop-shadow-sm">Scroll to interact</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section className="px-6 md:px-24 py-64 max-w-7xl mx-auto space-y-64 bg-white relative z-10">
+                    <div className="grid md:grid-cols-2 gap-16 md:gap-32 items-center">
+                        <Reveal>
+                            <div className="space-y-8 text-[#1d1d1f]">
+                                <span className="text-xs font-semibold text-blue-600 uppercase tracking-[0.2em]">01 Concept</span>
+                                <h2 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.1]">가장 작은,<br/>확실한 개성.</h2>
+                                <p className="text-[#86868b] text-lg leading-relaxed font-medium">우리는 일상의 소품에 새로운 생명력을 불어넣습니다. 당신의 취향을 가장 가볍고 세련되게 공유하는 방법.</p>
+                            </div>
+                        </Reveal>
+                        <div className="aspect-[4/5] bg-[#f5f5f7] rounded-[3rem] border border-gray-50 shadow-inner"></div>
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-16 md:gap-32 items-center">
+                        <div className="aspect-[4/5] bg-[#f5f5f7] rounded-[3rem] border border-gray-50 shadow-inner order-2 md:order-1"></div>
+                        <Reveal className="order-1 md:order-2">
+                            <div className="space-y-8 text-[#1d1d1f]">
+                                <span className="text-xs font-semibold text-[#34c759] uppercase tracking-[0.2em]">02 Quality</span>
+                                <h2 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.1]">타협 없는<br/>피니시.</h2>
+                                <p className="text-[#86868b] text-lg leading-relaxed font-medium">흔적이 남지 않는 프리미엄 소재와 고해상도 프린팅. 당신의 소중한 기기를 안전하고 아름답게 보호하며 꾸며줍니다.</p>
+                            </div>
+                        </Reveal>
+                    </div>
+                </section>
+
+                <section className="py-64 text-center bg-[#f5f5f7] px-6 md:px-12">
+                    <Reveal>
+                        <h2 className="text-5xl md:text-7xl font-semibold tracking-tight mb-16 text-[#1d1d1f]">READY TO PICK?</h2>
+                        <button onClick={() => navigateTo('#/products')} className="group inline-flex items-center gap-4 text-xl font-medium text-[#0066cc] hover:underline underline-offset-8 decoration-2">
+                            전체 에디션 보기 <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
+                        </button>
+                    </Reveal>
+                </section>
+            </div>
+        ));
+
+        const ProductsPage = memo(({ navigateTo, setIsPopupOpen }) => (
+            <div className="bg-white min-h-screen pt-40 pb-40 px-6 md:px-24 text-[#1d1d1f]">
+                <div className="max-w-7xl mx-auto">
+                    <Reveal><PathIndicator path="/products" /></Reveal>
+                    <div className="mb-32 text-center mt-12">
+                        <h1 className="text-5xl md:text-8xl font-semibold tracking-tight leading-tight">Our Variety</h1>
+                        <p className="text-[#86868b] mt-8 text-lg font-medium">당신의 스타일을 완성할 6가지 독창적인 에디션</p>
+                    </div>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10 mb-48">
+                        {CATEGORIES.map((cat) => (
+                            <Reveal key={cat.id}>
+                                <div onClick={() => navigateTo(`#/products/detail/0${cat.id}`)} className="group bg-[#f5f5f7] rounded-[2.5rem] p-8 md:p-12 aspect-square flex flex-col justify-between hover:bg-[#ebebed] transition-all duration-700 cursor-pointer border border-transparent overflow-hidden">
+                                    <h3 className="text-3xl font-semibold tracking-tight leading-tight">{cat.name}</h3>
+                                    <div className="flex-1 flex items-center justify-center group-hover:scale-105 transition-all duration-1000">
+                                        <div className="w-32 h-32 md:w-44 md:h-44 bg-white border border-gray-100 rounded-[2.5rem] rotate-12 flex items-center justify-center shadow-sm">
+                                            <span className="text-gray-100 font-semibold text-2xl md:text-3xl italic tracking-tighter">PICK</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between items-center pt-8 relative text-[#86868b]">
+                                        <span className="text-xs md:text-sm font-medium">자세히 보기</span>
+                                        <div className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-black text-white flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all mr-1 mb-1">
+                                            <ArrowRight size={18} />
+                                        </div>
+                                    </div>
+                                </div>
+                            </Reveal>
+                        ))}
+                    </div>
+                    <div className="pt-24 border-t border-gray-100">
+                        <div className="mb-24 text-center">
+                            <h2 className="text-4xl md:text-6xl font-semibold tracking-tight leading-tight">Bundle & Save</h2>
+                            <p className="text-[#86868b] mt-8 text-lg font-medium break-keep">많이 담을수록 더욱 가벼워지는 가격. 특별한 세트 구성을 확인하세요.</p>
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto">
+                            {BUNDLES.map((bundle, idx) => (
+                                <Reveal key={idx}>
+                                    <div className={`relative h-full flex flex-col p-10 rounded-[3rem] border transition-all duration-500 ${bundle.highlight ? 'bg-[#fbfbfd] border-gray-200 shadow-xl scale-105 z-10' : 'bg-[#f5f5f7] border-transparent hover:bg-white hover:border-gray-100 hover:shadow-lg'}`}>
+                                        {bundle.tag && <span className={`inline-block w-max px-3 py-1 rounded-full text-[10px] font-bold mb-6 ${bundle.highlight ? 'bg-black text-white' : 'bg-gray-200 text-gray-500'}`}>{bundle.tag}</span>}
+                                        <h3 className="text-2xl font-semibold mb-2">{bundle.title}</h3>
+                                        <p className="text-[#86868b] text-sm mb-6">{bundle.subtitle}</p>
+                                        <div className="text-4xl font-semibold tracking-tight mb-10">{bundle.price}</div>
+                                        <ul className="space-y-4 mb-12 flex-1">
+                                            {bundle.features.map((f, i) => (
+                                                <li key={i} className="flex items-start gap-3 text-sm text-gray-500 font-medium leading-tight"><CheckIcon size={16} className="text-blue-600 mt-0.5 shrink-0" /> {f}</li>
+                                            ))}
+                                        </ul>
+                                        <button onClick={() => setIsPopupOpen(true)} className={`w-full py-4 rounded-2xl text-sm font-semibold transition-all shadow-lg active:scale-[0.98] ${bundle.highlight ? 'bg-black text-white hover:bg-gray-800' : 'bg-white text-black border border-gray-100 hover:bg-gray-50'}`}>Select Plan</button>
+                                    </div>
+                                </Reveal>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        ));
+
+        const DetailPage = memo(({ product, navigateTo, setIsPopupOpen }) => (
+            <div className="bg-white min-h-screen pt-40 pb-32 px-6 md:px-24 text-[#1d1d1f]">
+                <div className="max-w-7xl mx-auto">
+                    <Reveal><PathIndicator path={`/products/detail/0${product?.id || '?'}`} /></Reveal>
+                    <button onClick={() => navigateTo('#/products')} className="flex items-center gap-2 text-[#86868b] hover:text-black mb-20 text-xs font-semibold uppercase tracking-widest transition-colors mt-8">
+                        <ArrowRight size={14} className="rotate-180" /> 목록으로 돌아가기
+                    </button>
+                    <div className="grid lg:grid-cols-2 gap-16 md:gap-32 mb-32 items-center">
+                        <div className="aspect-square bg-[#f5f5f7] rounded-[3.5rem] flex items-center justify-center relative shadow-inner overflow-hidden">
+                            <div className="w-64 h-64 md:w-72 md:h-72 border-[12px] border-white rotate-12 flex items-center justify-center p-10 text-center bg-white shadow-2xl rounded-[3rem]">
+                                <span className="text-2xl font-semibold italic uppercase tracking-tighter text-gray-100">PICK STICKER<br/>{product?.name}</span>
+                            </div>
+                        </div>
+                        <div className="flex flex-col">
+                            <h1 className="text-6xl md:text-8xl font-semibold tracking-tight mb-10 leading-tight">{product?.name}</h1>
+                            <p className="text-xl md:text-2xl text-[#86868b] mb-16 leading-relaxed font-medium break-keep">정밀한 디테일과 압도적인 감각. {product?.name} 컬렉션은 당신의 공간을 특별하게 만듭니다.</p>
+                            <div className="space-y-8 mb-20 border-t border-gray-100 pt-12 text-sm font-medium">
+                                <div className="flex justify-between items-start gap-12"><span className="text-[#86868b] uppercase tracking-widest text-[12px]">Place</span><span className="text-right break-keep text-base md:text-lg">서울특별시 양천구 목동로11길 46 <br/>서울영상고 영상동 2층 비전홀</span></div>
+                                <div className="flex justify-between items-center"><span className="text-[#86868b] uppercase tracking-widest text-[12px]">Price</span><span className="text-3xl font-semibold tracking-tight">{product?.price}</span></div>
+                            </div>
+                            <button onClick={() => setIsPopupOpen(true)} className="bg-black text-white py-6 rounded-full font-semibold text-sm hover:bg-gray-800 transition-all shadow-xl active:scale-[0.98]">BUY NOW</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        ));
+
+        // --- 메인 App ---
         function App() {
             const [page, setPage] = useState('home');
             const [selectedProduct, setSelectedProduct] = useState(null);
@@ -207,7 +400,6 @@
                         if (scrollHeight > 0) {
                             const progress = Math.max(0, Math.min(1, scrollPos / scrollHeight));
                             if (videoRef.current && videoRef.current.duration) {
-                                // [기술 제약 1] Decoupling: 스크롤 이벤트에서는 값만 업데이트
                                 targetTimeRef.current = progress * videoRef.current.duration;
                             }
                         }
@@ -222,20 +414,19 @@
                         if (video && canvas && video.readyState >= 2) {
                             const ctx = canvas.getContext('2d', { alpha: false });
                             
-                            // [기술 제약 3] Seeking Guard: 디코더 병목 방지
                             if (!video.seeking) {
                                 const timeToSeek = targetTimeRef.current;
                                 const diff = Math.abs(video.currentTime - timeToSeek);
 
-                                // 반응성을 위해 최소 임계값 유지
+                                // 병목 방지 기술 ( Seeking Guard )
                                 if (diff > 0.01) { 
                                     video.currentTime = timeToSeek;
                                 }
                                 
-                                // 화질 최우선 설정 적용
+                                // 고화질 렌더링 유지
                                 if (lastRenderedTimeRef.current !== video.currentTime) {
                                     ctx.imageSmoothingEnabled = true;
-                                    ctx.imageSmoothingQuality = 'high'; // 최고 화질 설정
+                                    ctx.imageSmoothingQuality = 'high';
                                     
                                     const { sx, sy, sWidth, sHeight } = drawRectRef.current;
                                     ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
@@ -257,7 +448,7 @@
                 };
             }, [syncPageWithHash, page]);
 
-            // 고화질 대응 (DPR 기반 캔버스 사이즈 조절)
+            // 해상도 조절 및 가시성 감지
             useEffect(() => {
                 const canvas = canvasRef.current;
                 const video = videoRef.current;
@@ -297,7 +488,7 @@
 
                 if (section) sectionObserver.observe(section);
                 if (video) video.addEventListener('loadedmetadata', updateSize);
-                window.addEventListener('resize', updateSize, { passive: true });
+                window.addEventListener('resize', updateSize);
                 updateSize();
 
                 return () => {
@@ -305,7 +496,7 @@
                     video?.removeEventListener('loadedmetadata', updateSize);
                     window.removeEventListener('resize', updateSize);
                 };
-            }, []);
+            }, [page]);
 
             useEffect(() => {
                 document.body.style.overflow = isMenuOpen ? 'hidden' : 'unset';
@@ -316,198 +507,19 @@
                 setIsMenuOpen(false);
             }, []);
 
-            const Navbar = memo(() => (
-                <nav className="fixed top-0 left-0 w-full z-[80] bg-white/70 backdrop-blur-md border-b border-gray-100 px-6 md:px-24 py-5 flex justify-between items-center">
-                    <div className="text-xl font-semibold tracking-tighter cursor-pointer select-none" onClick={() => navigateTo('#/home')}>PICK</div>
-                    <div className="hidden md:flex items-center gap-12 text-sm font-medium">
-                        <button onClick={() => navigateTo('#/home')} className={`transition-colors ${page === 'home' ? 'text-black' : 'text-gray-400 hover:text-black'}`}>Home</button>
-                        <button onClick={() => navigateTo('#/products')} className={`transition-colors ${page === 'products' ? 'text-black' : 'text-gray-400 hover:text-black'}`}>Products</button>
-                        <button onClick={() => setIsPopupOpen(true)} className="bg-black text-white px-6 py-2 rounded-full text-[11px] font-semibold tracking-wider hover:bg-gray-800 transition-all">BUY</button>
-                    </div>
-                    <div className="md:hidden">
-                        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-black p-1 relative z-[90]">
-                            {isMenuOpen ? <XIcon size={24} /> : <MenuIcon size={24} />}
-                        </button>
-                    </div>
-                    {isMenuOpen && (
-                        <div className="fixed inset-0 z-[70] pt-[80px] bg-white/95 backdrop-blur-3xl p-8 flex flex-col h-screen">
-                            <div className="flex flex-col gap-10 text-4xl font-semibold tracking-tighter">
-                                <button onClick={() => navigateTo('#/home')} className={page === 'home' ? 'text-black' : 'text-gray-300'}>Home</button>
-                                <button onClick={() => navigateTo('#/products')} className={page === 'products' ? 'text-black' : 'text-gray-300'}>Products</button>
-                            </div>
-                            <button onClick={() => { setIsPopupOpen(true); setIsMenuOpen(false); }} className="mt-auto w-full bg-black text-white py-5 rounded-2xl font-semibold text-lg shadow-xl active:scale-[0.98]">BUY NOW</button>
-                        </div>
-                    )}
-                </nav>
-            ));
-
-            const PurchasePopup = memo(() => (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-white/70 backdrop-blur-3xl animate-in fade-in" onClick={() => setIsPopupOpen(false)}>
-                    <button className="absolute top-10 right-10 text-black hover:opacity-50 transition" onClick={() => setIsPopupOpen(false)}><XIcon size={32} /></button>
-                    <div className="max-w-3xl text-center px-10" onClick={(e) => e.stopPropagation()}>
-                        <h2 className="text-2xl md:text-5xl font-semibold leading-tight tracking-tight mb-12 break-keep text-[#1d1d1f]">
-                            서울영상고등학교 영상동 2F 비전홀 <br className="hidden md:block" /> 전자상거래 PICK 부스에서 현장 구매해 주세요!
-                        </h2>
-                        <button className="bg-black text-white px-12 py-4 rounded-full text-sm font-medium hover:bg-gray-800 transition-all shadow-xl active:scale-[0.98]" onClick={() => setIsPopupOpen(false)}>닫기</button>
-                    </div>
-                </div>
-            ));
-
-            const HomePage = () => (
-                <div className="bg-white">
-                    <section className="h-screen w-full relative flex flex-col items-center overflow-hidden">
-                        <div className="absolute inset-0 bg-[#f5f5f7] z-0"></div>
-                        <div className="z-10 text-center pt-48 px-6 md:px-24 max-w-7xl mx-auto">
-                            <Reveal>
-                                <PathIndicator path="/home" />
-                                <h1 className="text-4xl md:text-7xl font-semibold tracking-tight leading-tight mb-4 text-[#1d1d1f]">나답게, 남다르게.</h1>
-                            </Reveal>
-                            <Reveal>
-                                <p className="text-[#86868b] text-base md:text-xl font-medium tracking-tight">Be myself, Be different.</p>
-                            </Reveal>
-                        </div>
-                    </section>
-                    
-                    <section id="scrolly-section" className="scrolly-background-section bg-white">
-                        <div className="sticky-canvas-area">
-                            {/* 고해상도 드로잉 전용 캔버스 */}
-                            <canvas ref={canvasRef} className="scrolly-video-canvas" />
-                            <video 
-                                ref={videoRef}
-                                src="Comp%201.webm" 
-                                style={{ display: 'none' }}
-                                muted playsInline preload="auto"
-                            />
-                            <div className="absolute bottom-20 left-0 w-full text-center">
-                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-[0.6em] animate-pulse drop-shadow-sm">Scroll to interact</p>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section className="px-6 md:px-24 py-64 max-w-7xl mx-auto space-y-64 bg-white relative z-10">
-                        <div className="grid md:grid-cols-2 gap-16 md:gap-32 items-center">
-                            <Reveal>
-                                <div className="space-y-8 text-[#1d1d1f]">
-                                    <span className="text-xs font-semibold text-blue-600 uppercase tracking-[0.2em]">01 Concept</span>
-                                    <h2 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.1]">가장 작은,<br/>확실한 개성.</h2>
-                                    <p className="text-[#86868b] text-lg leading-relaxed font-medium">우리는 일상의 소품에 새로운 생명력을 불어넣습니다. 당신의 취향을 가장 가볍고 세련되게 공유하는 방법.</p>
-                                </div>
-                            </Reveal>
-                            <div className="aspect-[4/5] bg-[#f5f5f7] rounded-[3rem] border border-gray-50 shadow-inner"></div>
-                        </div>
-                        <div className="grid md:grid-cols-2 gap-16 md:gap-32 items-center">
-                            <div className="aspect-[4/5] bg-[#f5f5f7] rounded-[3rem] border border-gray-50 shadow-inner order-2 md:order-1"></div>
-                            <Reveal className="order-1 md:order-2">
-                                <div className="space-y-8 text-[#1d1d1f]">
-                                    <span className="text-xs font-semibold text-[#34c759] uppercase tracking-[0.2em]">02 Quality</span>
-                                    <h2 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.1]">타협 없는<br/>피니시.</h2>
-                                    <p className="text-[#86868b] text-lg leading-relaxed font-medium">흔적이 남지 않는 프리미엄 소재와 고해상도 프린팅. 당신의 소중한 기기를 안전하고 아름답게 보호하며 꾸며줍니다.</p>
-                                </div>
-                            </Reveal>
-                        </div>
-                    </section>
-
-                    <section className="py-64 text-center bg-[#f5f5f7] px-6 md:px-12">
-                        <Reveal>
-                            <h2 className="text-5xl md:text-7xl font-semibold tracking-tight mb-16 text-[#1d1d1f]">READY TO PICK?</h2>
-                            <button onClick={() => navigateTo('#/products')} className="group inline-flex items-center gap-4 text-xl font-medium text-[#0066cc] hover:underline underline-offset-8 decoration-2">
-                                전체 에디션 보기 <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
-                            </button>
-                        </Reveal>
-                    </section>
-                </div>
-            );
-
-            const ProductsPage = () => (
-                <div className="bg-white min-h-screen pt-40 pb-40 px-6 md:px-24 text-[#1d1d1f]">
-                    <div className="max-w-7xl mx-auto">
-                        <Reveal><PathIndicator path="/products" /></Reveal>
-                        <div className="mb-32 text-center mt-12">
-                            <h1 className="text-5xl md:text-8xl font-semibold tracking-tight leading-tight">Our Variety</h1>
-                            <p className="text-[#86868b] mt-8 text-lg font-medium">당신의 스타일을 완성할 6가지 독창적인 에디션</p>
-                        </div>
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10 mb-48">
-                            {CATEGORIES.map((cat) => (
-                                <Reveal key={cat.id}>
-                                    <div onClick={() => navigateTo(`#/products/detail/0${cat.id}`)} className="group bg-[#f5f5f7] rounded-[2.5rem] p-8 md:p-12 aspect-square flex flex-col justify-between hover:bg-[#ebebed] transition-all duration-700 cursor-pointer border border-transparent overflow-hidden">
-                                        <h3 className="text-3xl font-semibold tracking-tight leading-tight">{cat.name}</h3>
-                                        <div className="flex-1 flex items-center justify-center group-hover:scale-105 transition-all duration-1000">
-                                            <div className="w-32 h-32 md:w-44 md:h-44 bg-white border border-gray-100 rounded-[2.5rem] rotate-12 flex items-center justify-center shadow-sm">
-                                                <span className="text-gray-100 font-semibold text-2xl md:text-3xl italic tracking-tighter">PICK</span>
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-between items-center pt-8 relative text-[#86868b]">
-                                            <span className="text-xs md:text-sm font-medium">자세히 보기</span>
-                                            <div className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-black text-white flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all mr-1 mb-1">
-                                                <ArrowRight size={18} />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </Reveal>
-                            ))}
-                        </div>
-                        <div className="pt-24 border-t border-gray-100">
-                            <div className="mb-24 text-center">
-                                <h2 className="text-4xl md:text-6xl font-semibold tracking-tight leading-tight">Bundle & Save</h2>
-                                <p className="text-[#86868b] mt-8 text-lg font-medium break-keep">많이 담을수록 더욱 가벼워지는 가격. 특별한 세트 구성을 확인하세요.</p>
-                            </div>
-                            <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto">
-                                {BUNDLES.map((bundle, idx) => (
-                                    <Reveal key={idx}>
-                                        <div className={`relative h-full flex flex-col p-10 rounded-[3rem] border transition-all duration-500 ${bundle.highlight ? 'bg-[#fbfbfd] border-gray-200 shadow-xl scale-105 z-10' : 'bg-[#f5f5f7] border-transparent hover:bg-white hover:border-gray-100 hover:shadow-lg'}`}>
-                                            {bundle.tag && <span className={`inline-block w-max px-3 py-1 rounded-full text-[10px] font-bold mb-6 ${bundle.highlight ? 'bg-black text-white' : 'bg-gray-200 text-gray-500'}`}>{bundle.tag}</span>}
-                                            <h3 className="text-2xl font-semibold mb-2">{bundle.title}</h3>
-                                            <p className="text-[#86868b] text-sm mb-6">{bundle.subtitle}</p>
-                                            <div className="text-4xl font-semibold tracking-tight mb-10">{bundle.price}</div>
-                                            <ul className="space-y-4 mb-12 flex-1">
-                                                {bundle.features.map((f, i) => (
-                                                    <li key={i} className="flex items-start gap-3 text-sm text-gray-500 font-medium leading-tight"><CheckIcon size={16} className="text-blue-600 mt-0.5 shrink-0" /> {f}</li>
-                                                ))}
-                                            </ul>
-                                            <button onClick={() => setIsPopupOpen(true)} className={`w-full py-4 rounded-2xl text-sm font-semibold transition-all shadow-lg active:scale-[0.98] ${bundle.highlight ? 'bg-black text-white hover:bg-gray-800' : 'bg-white text-black border border-gray-100 hover:bg-gray-50'}`}>Select Plan</button>
-                                        </div>
-                                    </Reveal>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-
-            const DetailPage = ({ product }) => (
-                <div className="bg-white min-h-screen pt-40 pb-32 px-6 md:px-24 text-[#1d1d1f]">
-                    <div className="max-w-7xl mx-auto">
-                        <Reveal><PathIndicator path={`/products/detail/0${product?.id || '?'}`} /></Reveal>
-                        <button onClick={() => navigateTo('#/products')} className="flex items-center gap-2 text-[#86868b] hover:text-black mb-20 text-xs font-semibold uppercase tracking-widest transition-colors mt-8">
-                            <ArrowRight size={14} className="rotate-180" /> 목록으로 돌아가기
-                        </button>
-                        <div className="grid lg:grid-cols-2 gap-16 md:gap-32 mb-32 items-center">
-                            <div className="aspect-square bg-[#f5f5f7] rounded-[3.5rem] flex items-center justify-center relative shadow-inner overflow-hidden">
-                                <div className="w-64 h-64 md:w-72 md:h-72 border-[12px] border-white rotate-12 flex items-center justify-center p-10 text-center bg-white shadow-2xl rounded-[3rem]">
-                                    <span className="text-2xl font-semibold italic uppercase tracking-tighter text-gray-100">PICK STICKER<br/>{product?.name}</span>
-                                </div>
-                            </div>
-                            <div className="flex flex-col">
-                                <h1 className="text-6xl md:text-8xl font-semibold tracking-tight mb-10 leading-tight">{product?.name}</h1>
-                                <p className="text-xl md:text-2xl text-[#86868b] mb-16 leading-relaxed font-medium break-keep">정밀한 디테일과 압도적인 감각. {product?.name} 컬렉션은 당신의 공간을 특별하게 만듭니다.</p>
-                                <div className="space-y-8 mb-20 border-t border-gray-100 pt-12 text-sm font-medium">
-                                    <div className="flex justify-between items-start gap-12"><span className="text-[#86868b] uppercase tracking-widest text-[12px]">Place</span><span className="text-right break-keep text-base md:text-lg">서울특별시 양천구 목동로11길 46 <br/>서울영상고 영상동 2층 비전홀</span></div>
-                                    <div className="flex justify-between items-center"><span className="text-[#86868b] uppercase tracking-widest text-[12px]">Price</span><span className="text-3xl font-semibold tracking-tight">{product?.price}</span></div>
-                                </div>
-                                <button onClick={() => setIsPopupOpen(true)} className="bg-black text-white py-6 rounded-full font-semibold text-sm hover:bg-gray-800 transition-all shadow-xl active:scale-[0.98]">BUY NOW</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-
             return (
-                <div className="min-h-screen bg-white overflow-x-hidden">
-                    <Navbar />
+                <div className="min-h-screen bg-white">
+                    <Navbar 
+                        page={page} 
+                        navigateTo={navigateTo} 
+                        setIsPopupOpen={setIsPopupOpen} 
+                        isMenuOpen={isMenuOpen} 
+                        setIsMenuOpen={setIsMenuOpen} 
+                    />
                     <main>
-                        {page === 'home' && <HomePage />}
-                        {page === 'products' && <ProductsPage />}
-                        {page === 'detail' && <DetailPage product={selectedProduct} />}
+                        {page === 'home' && <HomePage canvasRef={canvasRef} videoRef={videoRef} navigateTo={navigateTo} />}
+                        {page === 'products' && <ProductsPage navigateTo={navigateTo} setIsPopupOpen={setIsPopupOpen} />}
+                        {page === 'detail' && <DetailPage product={selectedProduct} navigateTo={navigateTo} setIsPopupOpen={setIsPopupOpen} />}
                     </main>
                     <footer className="bg-[#f5f5f7] pt-40 pb-20 px-6 md:px-24 text-center border-t border-gray-100 text-[#1d1d1f]">
                         <div className="text-5xl font-semibold tracking-tighter mb-10">PICK</div>
@@ -519,7 +531,7 @@
                         </div>
                         <div className="pt-12 border-t border-gray-200/50 text-[11px] text-[#86868b] font-medium uppercase tracking-[0.5em]">© 2026 PICK BRAND. All Rights Reserved.</div>
                     </footer>
-                    {isPopupOpen && <PurchasePopup />}
+                    {isPopupOpen && <PurchasePopup setIsPopupOpen={setIsPopupOpen} />}
                 </div>
             );
         }

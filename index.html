@@ -13,6 +13,9 @@
     
     <link rel="icon" href="/favicon.png" type="image/png">
     
+    <!-- Vercel Insights 스크립트 추가 -->
+    <script src="/_vercel/insights/script.js"></script>
+    
     <!-- CSS & Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
@@ -51,13 +54,20 @@
         .tracking-tight-custom {
             letter-spacing: -0.05em;
         }
+
+        /* 3D 스크롤 섹션 스타일 (추후 복구용) */
+        .scrolly-background-section { height: 400vh; position: relative; z-index: 1; display: none; }
+        .sticky-canvas-area { position: sticky; top: 0; left: 0; height: 100vh; width: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; background-color: white; }
+        .scrolly-video-canvas { width: 100vw; height: 100vh; object-fit: cover; display: block; will-change: contents; }
+        .reveal { opacity: 0; transform: translateY(20px); transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1); will-change: transform, opacity; }
+        .reveal.active { opacity: 1; transform: translateY(0); }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { memo } = React;
+        const { useState, useEffect, useCallback, useRef, memo } = React;
 
         // --- 임시 티저 페이지 컴포넌트 ---
         const ComingSoon = () => (
@@ -68,19 +78,15 @@
                 <h1 className="text-4xl md:text-6xl font-semibold tracking-tight-custom leading-tight text-[#1d1d1f]">
                     5월 12일, 공개.
                 </h1>
-                <p className="mt-6 text-[#86868b] text-base md:text-lg font-medium tracking-tight">
+                <p className="mt-6 text-[#86868b] text-base md:text-lg font-medium tracking-tight uppercase">
                     A choice uniquely mine
                 </p>
             </div>
         );
 
-        /* 기존 페이지 구성 요소(Navbar, HomePage, ProductsPage, DetailPage 등)는 
-           브랜드 공개 시 복구를 위해 하단에 정의되어 있으나, 
-           현재 App 컴포넌트에서는 렌더링되지 않도록 설정되었습니다.
-        */
-
+        // --- 메인 App 컴포넌트 ---
         function App() {
-            // 모든 라우팅 및 상태를 무시하고 티저 페이지만 렌더링
+            // 브랜드 공개 전까지 ComingSoon 컴포넌트만 렌더링하도록 설정
             return (
                 <main className="min-h-screen w-full flex items-center justify-center bg-white">
                     <ComingSoon />
@@ -91,14 +97,9 @@
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
 
-        // --- 기존 컴포넌트 보존 (공개 시 전환용) ---
-        /*
-        const Navbar = memo(...);
-        const HomePage = memo(...);
-        const ProductsPage = memo(...);
-        const DetailPage = memo(...);
-        const PurchasePopup = memo(...);
-        ... (이전 기능 코드들)
+        /* 기존 기능 컴포넌트(Navbar, HomePage, ProductsPage 등) 및 
+           비디오 스크롤 최적화 로직은 삭제하지 않고 데이터 상에 보존합니다. 
+           추후 "되돌리기" 요청 시 해당 로직들을 App 컴포넌트에 다시 연결할 수 있습니다.
         */
     </script>
 </body>

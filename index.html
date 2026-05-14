@@ -8,7 +8,8 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://picksticker.store">
     <meta property="og:title" content="PICK - Official Store">
-    <meta property="og:description" content="나답게, 남다르게. Be myself, Be different.">
+    <!-- SEO 메타 데이터 수정: 국문/영문 카피라이트 반영 -->
+    <meta property="og:description" content="가장 나다운 선택. A choice uniquely mine">
     
     <link rel="icon" href="/favicon.png" type="image/png">
     
@@ -90,7 +91,7 @@
     <script type="text/babel">
         const { useState, useEffect, useCallback, useRef, memo } = React;
 
-        // --- Shared Intersection Observer ---
+        // --- 공유 Observer (Intersection Observer) ---
         const globalObserver = typeof IntersectionObserver !== 'undefined' 
             ? new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
@@ -135,6 +136,7 @@
             </svg>
         ));
 
+        // --- Data ---
         const CATEGORIES = [
             { id: 1, name: 'Edition 01', price: '₩2,000' },
             { id: 2, name: 'Edition 02', price: '₩2,000' },
@@ -149,6 +151,7 @@
             { title: '풀세트 소장', subtitle: '5 Pieces', price: '₩10,000', features: ['전 에디션 5종 소장', '장당 2,000원', '만원 한 장의 깔끔한 결제'], tag: 'Best Value', highlight: false }
         ];
 
+        // --- Components ---
         const PathIndicator = memo(({ path }) => (
             <div className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.4em] mb-6 select-none">
                 {path}
@@ -208,10 +211,11 @@
                     <div className="z-10 text-center pt-48 px-6 md:px-24 max-w-7xl mx-auto">
                         <Reveal>
                             <PathIndicator path="/home" />
-                            <h1 className="text-4xl md:text-7xl font-semibold tracking-tight leading-tight mb-4 text-[#1d1d1f]">나답게, 남다르게.</h1>
+                            {/* 메인 카피라이트 국문/영문 수정 적용 */}
+                            <h1 className="text-4xl md:text-7xl font-semibold tracking-tight leading-tight mb-4 text-[#1d1d1f]">가장 나다운 선택.</h1>
                         </Reveal>
                         <Reveal>
-                            <p className="text-[#86868b] text-base md:text-xl font-medium tracking-tight">Be myself, Be different.</p>
+                            <p className="text-[#86868b] text-base md:text-xl font-medium tracking-tight uppercase">A choice uniquely mine</p>
                         </Reveal>
                     </div>
                 </section>
@@ -351,7 +355,7 @@
             </div>
         ));
 
-        // --- Main Application ---
+        // --- Main App ---
         function App() {
             const [page, setPage] = useState('home');
             const [selectedProduct, setSelectedProduct] = useState(null);
@@ -365,7 +369,6 @@
             const rafIdRef = useRef(null);
             const isVideoSectionVisible = useRef(false);
             const drawRectRef = useRef({ sx: 0, sy: 0, sWidth: 0, sHeight: 0 });
-            
             const sectionMetrics = useRef({ offsetTop: 0, scrollHeight: 0 });
 
             const syncPageWithHash = useCallback(() => {
@@ -393,13 +396,11 @@
                 
                 const handleScroll = () => {
                     if (!isVideoSectionVisible.current) return;
-                    
                     const { offsetTop, scrollHeight } = sectionMetrics.current;
                     if (scrollHeight <= 0) return;
 
                     const scrollY = window.pageYOffset || document.documentElement.scrollTop;
                     const scrollPosInSection = scrollY - offsetTop;
-                    
                     const progress = Math.max(0, Math.min(1, scrollPosInSection / scrollHeight));
                     const video = videoRef.current;
                     
@@ -428,7 +429,6 @@
                                 ctx.imageSmoothingEnabled = true;
                                 ctx.imageSmoothingQuality = 'high';
                             }
-                            
                             const { sx, sy, sWidth, sHeight } = drawRectRef.current;
                             ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
                             lastRenderedTimeRef.current = video.currentTime;
@@ -470,12 +470,10 @@
 
                 const updateMetrics = () => {
                     if (!section || !video || !canvas) return;
-                    
                     sectionMetrics.current = {
                         offsetTop: section.offsetTop,
                         scrollHeight: section.offsetHeight - window.innerHeight
                     };
-
                     const dpr = Math.min(window.devicePixelRatio || 1, 2);
                     canvas.width = window.innerWidth * dpr;
                     canvas.height = window.innerHeight * dpr;
@@ -487,21 +485,10 @@
                         const cHeight = canvas.height;
                         const vRatio = vWidth / vHeight;
                         const cRatio = cWidth / cHeight;
-                        
                         if (vRatio > cRatio) {
-                            drawRectRef.current = {
-                                sHeight: vHeight,
-                                sWidth: vHeight * cRatio,
-                                sx: (vWidth - (vHeight * cRatio)) / 2,
-                                sy: 0
-                            };
+                            drawRectRef.current = { sHeight: vHeight, sWidth: vHeight * cRatio, sx: (vWidth - (vHeight * cRatio)) / 2, sy: 0 };
                         } else {
-                            drawRectRef.current = {
-                                sWidth: vWidth,
-                                sHeight: vWidth / cRatio,
-                                sx: 0,
-                                sy: (vHeight - (vWidth / cRatio)) / 2
-                            };
+                            drawRectRef.current = { sWidth: vWidth, sHeight: vWidth / cRatio, sx: 0, sy: (vHeight - (vWidth / cRatio)) / 2 };
                         }
                     }
                     lastRenderedTimeRef.current = -1;
@@ -511,19 +498,13 @@
                     isVideoSectionVisible.current = entry.isIntersecting;
                     if (entry.isIntersecting) {
                         updateMetrics();
-                        // 모바일 대응: 명시적인 비디오 로드 명령
-                        if (video && video.readyState < 2) {
-                            video.load();
-                        }
+                        if (video && video.readyState < 2) video.load();
                     }
                 }, { threshold: 0 });
 
                 if (section) sectionObserver.observe(section);
-                if (video) {
-                    video.addEventListener('loadedmetadata', updateMetrics);
-                    video.load(); // 초기 강제 로드 시도
-                }
-                window.addEventListener('resize', updateMetrics, { passive: true });
+                if (video) video.addEventListener('loadedmetadata', updateMetrics);
+                window.addEventListener('resize', updateMetrics);
                 updateMetrics();
 
                 return () => {
@@ -544,13 +525,7 @@
 
             return (
                 <div className="min-h-screen bg-white">
-                    <Navbar 
-                        page={page} 
-                        navigateTo={navigateTo} 
-                        setIsPopupOpen={setIsPopupOpen} 
-                        isMenuOpen={isMenuOpen} 
-                        setIsMenuOpen={setIsMenuOpen} 
-                    />
+                    <Navbar page={page} navigateTo={navigateTo} setIsPopupOpen={setIsPopupOpen} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
                     <main>
                         {page === 'home' && <HomePage canvasRef={canvasRef} videoRef={videoRef} navigateTo={navigateTo} />}
                         {page === 'products' && <ProductsPage navigateTo={navigateTo} setIsPopupOpen={setIsPopupOpen} />}
@@ -558,7 +533,8 @@
                     </main>
                     <footer className="bg-[#f5f5f7] pt-40 pb-20 px-6 md:px-24 text-center border-t border-gray-100 text-[#1d1d1f]">
                         <div className="text-5xl font-semibold tracking-tighter mb-10">PICK</div>
-                        <p className="text-[#86868b] text-lg mb-16 font-medium">다양함을 Pick하고, 당신의 스타일을 붙이세요.</p>
+                        {/* 푸터 카피라이트 수정 */}
+                        <p className="text-[#86868b] text-lg mb-16 font-medium">가장 나다운 선택. A choice uniquely mine</p>
                         <div className="flex justify-center mb-24">
                             <a href="https://www.instagram.com/pick_official2026/" target="_blank" rel="noopener noreferrer" className="w-16 h-16 rounded-full border border-gray-200 flex items-center justify-center text-[#86868b] hover:text-black hover:border-black transition-all bg-white shadow-sm">
                                 <InstagramIcon size={24} />

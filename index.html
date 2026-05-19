@@ -368,14 +368,14 @@
                             <Reveal key={cat.id}>
                                 <div className="bg-[#f5f5f7] rounded-[2.5rem] p-8 md:p-10 flex flex-col items-center justify-between hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 relative overflow-visible">
                                     
-                                    {/* 상단 이미지 영역: 사각형 틀 내부로 오버플로우 제한 및 스티커 강조 배치 */}
+                                    {/* 상단 이미지 영역: 사각형 틀 내부 가로 여백 확보 및 카메라 숨김 상단 정렬 적용 */}
                                     <div className={`w-full aspect-square rounded-[2rem] bg-gradient-to-b ${cat.gradient} relative shadow-inner overflow-hidden mb-6`}>
                                         <img 
                                             src={cat.img} 
                                             alt={cat.name} 
-                                            className="absolute left-1/2 top-0 w-full h-full object-contain" 
+                                            className="absolute left-1/2 top-0 w-[65%] h-full object-contain" 
                                             style={{ 
-                                                transform: 'translateX(-50%) translateY(-30%) scale(3)',
+                                                transform: 'translateX(-50%) translateY(-15%) scale(1.4)',
                                                 transformOrigin: 'top center'
                                             }}
                                             onError={(e) => { e.target.style.display = 'none'; }}

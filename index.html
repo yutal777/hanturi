@@ -241,7 +241,7 @@
                     PICK BRAND
                 </div>
                 <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-tight text-[#1d1d1f] select-none" style={{ letterSpacing: '-0.05em' }}>
-                    5월 20일 20:00, 공개.
+                    5월 20일, 공개.
                 </h1>
                 <p className="mt-6 text-[#86868b] text-base md:text-lg font-medium tracking-tight uppercase select-none">
                     A choice uniquely <span onClick={onBypass} className="cursor-default hover:text-black transition-colors duration-300 select-all">mine</span>
@@ -345,7 +345,8 @@
                 <section className="py-64 text-center bg-[#f5f5f7] px-6 md:px-12">
                     <Reveal>
                         <h2 className="text-5xl md:text-7xl font-semibold tracking-tight mb-16 text-[#1d1d1f]">READY TO PICK?</h2>
-                        <button onClick={() => navigateTo('#/products')} className="group inline-flex items-center gap-4 text-xl font-medium text-[#0066cc] hover:underline underline-offset-8 decoration-2">
+                        {/* 전체 에디션 보기 텍스트 컬러 블랙 변경 */}
+                        <button onClick={() => navigateTo('#/products')} className="group inline-flex items-center gap-4 text-xl font-medium text-black hover:underline underline-offset-8 decoration-2">
                             전체 에디션 보기 <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
                         </button>
                     </Reveal>
@@ -353,7 +354,7 @@
             </div>
         ));
 
-        // --- ProductsPage 컴포넌트 ---
+        // --- 수정된 ProductsPage 컴포넌트 ---
         const ProductsPage = memo(({ navigateTo }) => (
             <div className="bg-white min-h-screen pt-40 pb-40 px-6 md:px-24 text-[#1d1d1f]">
                 <div className="max-w-7xl mx-auto">
@@ -368,21 +369,17 @@
                             <Reveal key={cat.id}>
                                 <div className="bg-[#f5f5f7] rounded-[2.5rem] p-8 md:p-10 flex flex-col items-center justify-between hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 relative overflow-visible">
                                     
-                                    {/* 상단 이미지 영역: 좌우 여백을 남기고 translateY 오프셋을 -25%로 조정하여 정교하게 정렬 */}
-                                    <div className={`w-full aspect-square rounded-[2rem] bg-gradient-to-b ${cat.gradient} relative shadow-inner overflow-hidden mb-6`}>
+                                    {/* 상단 이미지 영역: 상세 페이지처럼 패딩 p-8 및 object-contain 구성으로 완벽한 중앙 정렬 적용 */}
+                                    <div className={`w-full aspect-square rounded-[2rem] bg-gradient-to-b ${cat.gradient} relative shadow-inner overflow-hidden mb-6 flex items-center justify-center p-8`}>
                                         <img 
                                             src={cat.img} 
                                             alt={cat.name} 
-                                            className="absolute left-1/2 top-0 w-[65%] h-full object-contain" 
-                                            style={{ 
-                                                transform: 'translateX(-50%) translateY(-25%) scale(1.65)',
-                                                transformOrigin: 'center center'
-                                            }}
+                                            className="w-full h-full object-contain transform hover:scale-105 transition-transform duration-500" 
                                             onError={(e) => { e.target.style.display = 'none'; }}
                                         />
                                     </div>
                                     
-                                    {/* 텍스트 디테일 영역: 사각형 틀 바로 아래 간격을 기준으로 일정하게 배치 */}
+                                    {/* 텍스트 디테일 영역: 정렬 보완 */}
                                     <div className="mt-6 text-center flex flex-col items-center w-full flex-1 relative z-10">
                                         <h3 className="text-2xl md:text-3xl font-bold tracking-tight-custom text-[#1d1d1f] mb-3">
                                             {cat.name}
@@ -394,11 +391,11 @@
                                             ₩2,000부터
                                         </div>
                                         
-                                        {/* 듀얼 액션 버튼 구성 */}
+                                        {/* 듀얼 액션 버튼 구성: 포인트 컬러를 블랙(Black)으로 통일 */}
                                         <div className="flex items-center gap-6 mt-auto">
                                             <button 
                                                 onClick={() => navigateTo(`#/products/detail/0${cat.id}`)}
-                                                className="bg-[#0071e3] text-white px-6 py-2.5 rounded-full text-xs md:text-sm font-semibold hover:bg-[#0077ed] active:scale-95 transition-all shadow-sm"
+                                                className="bg-black text-white px-6 py-2.5 rounded-full text-xs md:text-sm font-semibold hover:bg-gray-800 active:scale-95 transition-all shadow-sm"
                                             >
                                                 더 알아보기
                                             </button>
@@ -406,7 +403,7 @@
                                                 href={PURCHASE_LINK} 
                                                 target="_blank" 
                                                 rel="noopener noreferrer" 
-                                                className="text-[#0066cc] hover:underline text-xs md:text-sm font-semibold flex items-center gap-1 group"
+                                                className="text-black hover:underline text-xs md:text-sm font-semibold flex items-center gap-1 group"
                                             >
                                                 구입하기 <span className="inline-block transform group-hover:translate-x-0.5 transition-transform">&gt;</span>
                                             </a>
@@ -477,7 +474,8 @@
                                     <span className="text-right break-keep text-base">서울특별시 양천구 목동로11길 46 <br/>서울영상고 영상동 2층 비전홀</span>
                                 </div>
                             </div>
-                            <a href={PURCHASE_LINK} target="_blank" rel="noopener noreferrer" className="bg-[#0071e3] text-white py-6 rounded-full font-semibold text-sm hover:bg-[#0077ed] transition-all shadow-xl active:scale-[0.98] text-center block">BUY NOW</a>
+                            {/* BUY NOW 버튼 블랙 컬러 적용 */}
+                            <a href={PURCHASE_LINK} target="_blank" rel="noopener noreferrer" className="bg-black text-white py-6 rounded-full font-semibold text-sm hover:bg-gray-800 transition-all shadow-xl active:scale-[0.98] text-center block">BUY NOW</a>
                         </div>
                     </div>
                 </div>

@@ -355,7 +355,7 @@
             </div>
         ));
 
-        // --- 수정된 ProductsPage 컴포넌트: 참고 스크린샷 기반 카드 레이아웃 및 디바이스 오버플로우 구현 ---
+        // --- 수정된 ProductsPage 컴포넌트: 참고 스크린샷 기반 카드 레이아웃 및 디바이스 오버플로우 최종 최적화 ---
         const ProductsPage = memo(({ navigateTo }) => (
             <div className="bg-white min-h-screen pt-40 pb-40 px-6 md:px-24 text-[#1d1d1f]">
                 <div className="max-w-7xl mx-auto">
@@ -365,23 +365,23 @@
                         <p className="text-[#86868b] mt-8 text-lg font-medium">당신의 스타일을 완성할 5가지 독창적인 에디션</p>
                     </div>
                     {/* 제품 그리드 섹션 */}
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-y-32 gap-x-12 mb-48">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-y-16 gap-x-12 mb-48">
                         {CATEGORIES.map((cat) => (
                             <Reveal key={cat.id}>
-                                <div className="bg-[#f5f5f7] rounded-[2.5rem] p-8 md:p-10 flex flex-col items-center justify-between hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 relative">
+                                <div className="bg-[#f5f5f7] rounded-[2.5rem] p-8 md:p-10 flex flex-col items-center justify-between hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 relative overflow-visible">
                                     
-                                    {/* 상단 이미지 영역: 커스텀 그라디언트 배경 및 모형 배치 (요청 사항에 따른 2.5배 스케일링 및 하단 중앙 걸치기) */}
-                                    <div className={`w-full aspect-square rounded-[2rem] bg-gradient-to-b ${cat.gradient} relative shadow-inner overflow-visible`}>
+                                    {/* 상단 이미지 영역: 커스텀 그라디언트 배경 및 모형 배치 (사각형 틀 바깥으로 돌출되며 텍스트 흐름을 무너뜨리지 않는 구조) */}
+                                    <div className={`w-full aspect-square rounded-[2rem] bg-gradient-to-b ${cat.gradient} relative shadow-inner overflow-visible mb-6`}>
                                         <img 
                                             src={cat.img} 
                                             alt={cat.name} 
-                                            className="absolute left-1/2 top-full -translate-x-1/2 -translate-y-1/2 w-[115%] h-[115%] object-contain transition-transform duration-500 hover:scale-110" 
+                                            className="absolute left-1/2 top-[60%] -translate-x-1/2 -translate-y-1/2 w-[75%] h-[120%] object-contain transition-transform duration-500 hover:scale-110" 
                                             onError={(e) => { e.target.style.display = 'none'; }}
                                         />
                                     </div>
                                     
-                                    {/* 텍스트 디테일 영역: 세련된 중앙 정렬 (오버플로우된 이미지 공간 확보를 위해 mt-40 설정) */}
-                                    <div className="mt-40 text-center flex flex-col items-center w-full flex-1">
+                                    {/* 텍스트 디테일 영역: 사각형 틀 바로 아래 간격을 기준으로 일정하게 배치 (mt-14로 최적화) */}
+                                    <div className="mt-14 text-center flex flex-col items-center w-full flex-1 relative z-10">
                                         <h3 className="text-2xl md:text-3xl font-bold tracking-tight-custom text-[#1d1d1f] mb-3">
                                             {cat.name}
                                         </h3>

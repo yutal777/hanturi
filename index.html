@@ -211,7 +211,7 @@
             return <div ref={ref} className={`reveal ${className}`}>{children}</div>;
         });
 
-        // --- 티저 페이지 컴포넌트 ---
+        // --- 티저 페이지 컴포넌트 (실시간 카운트다운 탑재) ---
         const ComingSoonPage = memo(({ onBypass }) => {
             const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0, expired: false });
 
@@ -299,7 +299,7 @@
         ));
 
         // --- 변경된 HomePage 컴포넌트 ---
-        const HomePage = memo(({ navigateTo }) => (
+        const HomePage = memo(({ canvasRef, videoRef, overlayRef, navigateTo }) => (
             <div className="bg-white">
                 <section className="h-screen w-full relative flex flex-col items-center justify-start overflow-hidden bg-[#f5f5f7]">
                     {/* 가독성을 높이기 위해 텍스트 컨테이너의 z-index를 20으로 설정 */}
@@ -317,7 +317,7 @@
                     <div className="absolute inset-0 bg-gradient-to-b from-[#f5f5f7] via-[#f5f5f7]/85 to-transparent h-[55%] z-10 pointer-events-none"></div>
 
                     {/* 메인 홈 페이지 배경 이미지 위치를 Y축 하단 방향으로 대폭 끌어내림 */}
-                    <div className="absolute top-[32%] left-0 w-full h-[64%] md:h-[73%] flex items-end justify-center overflow-hidden z-0">
+                    <div className="absolute bottom-[-48px] md:bottom-[-96px] left-0 w-full h-[64%] md:h-[73%] flex items-end justify-center overflow-hidden z-0">
                         <img 
                             src="main_v2_00000.png" 
                             alt="Main Background" 
@@ -346,13 +346,14 @@
                             />
                         </div>
                     </div>
-                    {/* 02 Quality 세션: 마크업 프레임은 보존하면서 스타일 번역으로 이미지의 물리적 배치만 우측으로 밀착 조율 */}
+                    {/* 02 Quality 세션 */}
                     <div className="grid md:grid-cols-2 gap-16 md:gap-32 items-center">
                         <div className="aspect-[4/5] order-2 md:order-1 flex items-center justify-center overflow-visible">
                             <img 
                                 src="Vintage_mac_Web.png" 
                                 alt="Quality Sticker" 
-                                className="w-full h-full object-contain md:scale-[1.3] md:translate-x-[12%]"
+                                className="w-full h-full object-contain" 
+                                style={{ transform: 'scale(1.3) translateX(12%)' }}
                                 onError={(e) => { e.target.style.display = 'none'; }}
                             />
                         </div>
@@ -366,7 +367,7 @@
                     </div>
                 </section>
 
-                {/* 03 Harmony 전용 독립 세션 (텍스트 가로폭 제한 및 이미지를 우측 정렬 끝에서 좌측 방향으로 강제 당김) */}
+                {/* 03 Harmony 전용 독립 세션 */}
                 <section className="bg-[#f5f5f7] pt-24 pb-0 md:py-0 md:h-[650px] relative overflow-hidden z-10 border-t border-b border-gray-100">
                     <div className="max-w-7xl mx-auto h-full grid md:grid-cols-12 gap-8 items-center px-6 md:px-24 relative">
                         <Reveal className="md:col-span-4 md:py-24 z-20 max-w-sm">
@@ -389,8 +390,8 @@
                         </div>
                     </div>
 
-                    {/* 데스크톱 환경 (우측 정렬 오프셋을 증량하여 이미지를 텍스트 바깥 좌측 방향으로 가시 배치) */}
-                    <div className="hidden md:block absolute left-[35%] bottom-0 w-[55%] h-[90%] z-10">
+                    {/* 데스크톱 환경 */}
+                    <div className="hidden md:block absolute right-24 md:right-36 lg:right-48 bottom-0 w-[50%] lg:w-[55%] h-[85%] z-10">
                         <img 
                             src="Example_mockup.png" 
                             alt="Harmony Mockup" 
@@ -400,14 +401,44 @@
                     </div>
                 </section>
 
-                {/* READY TO PICK 세션 */}
-                <section className="py-64 text-center bg-white px-6 md:px-12 relative z-10">
-                    <Reveal>
-                        <h2 className="text-5xl md:text-7xl font-semibold tracking-tight mb-16 text-[#1d1d1f]">READY TO PICK?</h2>
-                        <button onClick={() => navigateTo('#/products')} className="group inline-flex items-center gap-4 text-xl font-medium text-black hover:underline underline-offset-8 decoration-2">
-                            전체 에디션 보기 <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
-                        </button>
-                    </Reveal>
+                {/* READY TO PICK 세션 (스크롤 비디오 프레임 전환 최적화 시스템 적용, 깃허브 로컬 파일 경로 test.webm으로 바인딩) */}
+                <section id="ready-scrolly-section" className="relative h-[300vh] bg-[#f5f5f7]">
+                    <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden bg-[#f5f5f7]">
+                        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full object-cover bg-[#f5f5f7]" />
+                        
+                        <div style={{ position: 'absolute', width: '1px', height: '1px', opacity: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+                            <video 
+                                ref={videoRef}
+                                src="test.webm" 
+                                muted 
+                                playsInline 
+                                webkit-playsinline="true" 
+                                preload="auto"
+                                style={{ width: '100%', height: '100%' }}
+                            />
+                        </div>
+
+                        {/* 텍스트 및 버튼 오버레이 */}
+                        <div 
+                            ref={overlayRef}
+                            className="z-20 text-center px-6 transition-all duration-500 ease-out transform"
+                            style={{ 
+                                opacity: 0,
+                                transform: `translateY(20px)`,
+                                pointerEvents: 'none'
+                            }}
+                        >
+                            <h2 className="text-5xl md:text-7xl font-bold tracking-tight mb-16 text-[#1d1d1f] drop-shadow-sm">
+                                READY TO PICK?
+                            </h2>
+                            <button 
+                                onClick={() => navigateTo('#/products')} 
+                                className="group inline-flex items-center gap-4 text-xl font-medium text-black hover:underline underline-offset-8 decoration-2 drop-shadow-sm"
+                            >
+                                전체 에디션 보기 <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
+                            </button>
+                        </div>
+                    </div>
                 </section>
             </div>
         ));
@@ -418,7 +449,7 @@
                 <div className="max-w-7xl mx-auto">
                     <Reveal><PathIndicator path="/products" /></Reveal>
                     <div className="mb-20 text-center mt-12">
-                        <h1 className="text-5xl md:text-8xl font-semibold tracking-tight leading-tight">Our Edition</h1>
+                        <h1 className="text-5xl md:text-8xl font-semibold tracking-tight leading-tight">Our Variety</h1>
                         <p className="text-[#86868b] mt-8 text-lg font-medium">당신의 스타일을 완성할 5가지 독창적인 에디션</p>
                     </div>
 
@@ -656,7 +687,7 @@
                                 <img 
                                     src={product?.img} 
                                     alt={product?.name} 
-                                    className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
+                                    className="w-full h-full object-contain"
                                     onError={(e) => { e.target.style.display = 'none'; }}
                                 />
                                 {/* 호버 시 크게 보기 배너 표시 */}
@@ -697,7 +728,7 @@
                                 <span className="text-xs font-semibold text-black uppercase tracking-[0.2em]">Mockup Guide</span>
                                 <h2 className="text-2xl md:text-4xl font-bold tracking-tight mt-2">노트북 & 핸드폰 스티커 예시</h2>
                                 <p className="text-[#86868b] mt-4 text-sm md:text-base max-w-2xl mx-auto break-keep">
-                                    어떠한 규격의 기기나 오브제, 어떤 성격의 장소에 부착하더라도 완벽한 시각적 밸런스를 유지하며 고유의 감각적인 무드를 입힙니다. 컴퓨터 스티커(큰 사이즈)와 핸드폰 스티커(작은 사이즈)의 정밀한 매치 배율을 레이아웃 가이드로 확인해 보세요.
+                                    어떠한 규격 of 기기나 오브제, 어떤 성격 of 장소에 부착하더라도 완벽한 시각적 밸런스를 유지하며 고유 of 감각적인 무드를 입힙니다. 컴퓨터 스티커(큰 사이즈)와 핸드폰 스티커(작은 사이즈) of 정밀한 매치 배율을 레이아웃 가이드로 확인해 보세요.
                                 </p>
                             </div>
                             <div className="max-w-4xl mx-auto">
@@ -777,6 +808,21 @@
             const [selectedProduct, setSelectedProduct] = useState(null);
             const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+            const videoRef = useRef(null);
+            const canvasRef = useRef(null);
+            const overlayRef = useRef(null);
+            
+            const targetTimeRef = useRef(0);
+            const lerpedTimeRef = useRef(0); // 60fps 비디오의 부드러운 스크롤 정밀 제어를 위한 프레임 보간값 참조
+            const lastRenderedTimeRef = useRef(-1);
+            const rafIdRef = useRef(null);
+            const isVideoSectionVisible = useRef(false);
+            const drawRectRef = useRef({ sx: 0, sy: 0, sWidth: 0, sHeight: 0 });
+            const sectionMetrics = useRef({ offsetTop: 0, scrollHeight: 0 });
+
+            const lastVideoWidth = useRef(0);
+            const lastVideoHeight = useRef(0);
+
             const syncPageWithHash = useCallback(() => {
                 const hash = window.location.hash;
                 let newPage = 'home';
@@ -802,10 +848,195 @@
                 syncPageWithHash();
                 window.addEventListener('hashchange', syncPageWithHash);
 
+                const handleScroll = () => {
+                    const section = document.getElementById('ready-scrolly-section');
+                    const video = videoRef.current;
+                    const overlay = overlayRef.current;
+                    if (!section) return;
+
+                    const offsetTop = section.offsetTop;
+                    const scrollHeight = section.offsetHeight - window.innerHeight;
+                    if (scrollHeight <= 0) return;
+
+                    const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+                    const progress = Math.max(0, Math.min(1, (scrollY - offsetTop) / scrollHeight));
+                    
+                    if (video && video.duration) {
+                        targetTimeRef.current = progress * video.duration;
+                    }
+
+                    // overlay 엘리먼트 성능 극대화 직접 매핑 제어
+                    if (overlay) {
+                        if (progress > 0.75) {
+                            const alpha = (progress - 0.75) * 4;
+                            const translateY = (1 - alpha) * 20;
+                            overlay.style.opacity = alpha;
+                            overlay.style.transform = `translateY(${translateY}px)`;
+                            overlay.style.pointerEvents = 'auto';
+                        } else {
+                            overlay.style.opacity = 0;
+                            overlay.style.transform = `translateY(20px)`;
+                            overlay.style.pointerEvents = 'none';
+                        }
+                    }
+                };
+
+                const performDraw = () => {
+                    const video = videoRef.current;
+                    const canvas = canvasRef.current;
+                    if (!video || !canvas || video.readyState < 2) return;
+
+                    // WebM 알파 렌더링 지원 및 고밀도 드로잉을 위해 알파 채널 활성화
+                    const ctx = canvas.getContext('2d', { alpha: true });
+                    
+                    // 스크롤 시 프레임 정체 현상을 극복하기 위한 점진적 탐색(Easing) 수치 대입
+                    const timeToSeek = lerpedTimeRef.current;
+                    const diff = Math.abs(video.currentTime - timeToSeek);
+
+                    // 디코더 락 및 병목 제거를 위해 seeking 중이 아닐 때만 정확히 갱신 요청
+                    if (!video.seeking && diff > 0.01) {
+                        video.currentTime = timeToSeek;
+                    }
+                    
+                    const vWidth = video.videoWidth || 1920;
+                    const vHeight = video.videoHeight || 1080;
+                    
+                    if (vWidth !== lastVideoWidth.current || vHeight !== lastVideoHeight.current) {
+                        lastVideoWidth.current = vWidth;
+                        lastVideoHeight.current = vHeight;
+                        
+                        const cWidth = canvas.width;
+                        const cHeight = canvas.height;
+                        const vRatio = vWidth / vHeight;
+                        const cRatio = cWidth / cHeight;
+                        if (vRatio > cRatio) {
+                            drawRectRef.current = { sHeight: vHeight, sWidth: vHeight * cRatio, sx: (vWidth - (vHeight * cRatio)) / 2, sy: 0 };
+                        } else {
+                            drawRectRef.current = { sWidth: vWidth, sHeight: vWidth / cRatio, sx: 0, sy: (vHeight - (vWidth / cRatio)) / 2 };
+                        }
+                    }
+
+                    // 투명 영역이 검은색으로 도포되는 현상을 막기 위해 드로잉 전 캔버스를 항상 회색(#f5f5f7)으로 채움
+                    ctx.fillStyle = '#f5f5f7';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    
+                    const { sx, sy, sWidth, sHeight } = drawRectRef.current;
+                    
+                    // 드로잉 시 캔버스를 초기화하지 않고 직전 프레임 상태를 보존(깜빡임 및 사라짐 완전 제거)
+                    if (sWidth > 0 && sHeight > 0) {
+                        ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+                    } else {
+                        ctx.drawImage(video, 0, 0, vWidth, vHeight, 0, 0, canvas.width, canvas.height);
+                    }
+                };
+
+                const renderLoop = () => {
+                    if (isVideoSectionVisible.current) {
+                        // 스크롤 프레임 끊김 해결을 위한 60fps 부드러운 시간차 프레임 동기화 연산
+                        const target = targetTimeRef.current;
+                        lerpedTimeRef.current += (target - lerpedTimeRef.current) * 0.12; // 0.12 감쇄 비율로 부드러운 스크롤 탐색 실현
+                        performDraw();
+                    }
+                    rafIdRef.current = requestAnimationFrame(renderLoop);
+                };
+
+                let rvfcId;
+                if (videoRef.current && 'requestVideoFrameCallback' in HTMLVideoElement.prototype) {
+                    const videoCallback = () => {
+                        if (isVideoSectionVisible.current) performDraw();
+                        rvfcId = videoRef.current.requestVideoFrameCallback(videoCallback);
+                    };
+                    rvfcId = videoRef.current.requestVideoFrameCallback(videoCallback);
+                }
+
+                window.addEventListener('scroll', handleScroll, { passive: true });
+                rafIdRef.current = requestAnimationFrame(renderLoop);
+
                 return () => {
                     window.removeEventListener('hashchange', syncPageWithHash);
+                    window.removeEventListener('scroll', handleScroll);
+                    if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+                    if (rvfcId && videoRef.current) videoRef.current.cancelVideoFrameCallback(rvfcId);
                 };
             }, [syncPageWithHash, page, isTeaser]);
+
+            useEffect(() => {
+                if (isTeaser) return;
+
+                const section = document.getElementById('ready-scrolly-section');
+                const video = videoRef.current;
+                const canvas = canvasRef.current;
+                
+                let lastWidth = window.innerWidth;
+                let lastHeight = window.innerHeight;
+
+                const updateMetrics = () => {
+                    if (!section || !video || !canvas) return;
+                    
+                    const currentWidth = window.innerWidth;
+                    const currentHeight = window.innerHeight;
+                    
+                    const widthChanged = currentWidth !== lastWidth;
+                    const heightChanged = Math.abs(currentHeight - lastHeight) > 120;
+
+                    sectionMetrics.current = {
+                        offsetTop: section.offsetTop,
+                        scrollHeight: section.offsetHeight - window.innerHeight
+                    };
+
+                    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+                    
+                    if (widthChanged || heightChanged || canvas.width === 0) {
+                        canvas.width = currentWidth * dpr;
+                        canvas.height = currentHeight * dpr;
+                        
+                        canvas.style.width = currentWidth + 'px';
+                        canvas.style.height = currentHeight + 'px';
+                        
+                        lastWidth = currentWidth;
+                        lastHeight = currentHeight;
+                    }
+
+                    const vWidth = video.videoWidth || 1920;
+                    const vHeight = video.videoHeight || 1080;
+                    
+                    lastVideoWidth.current = vWidth;
+                    lastVideoHeight.current = vHeight;
+
+                    const cWidth = canvas.width;
+                    const cHeight = canvas.height;
+                    const vRatio = vWidth / vHeight;
+                    const cRatio = cWidth / cHeight;
+                    if (vRatio > cRatio) {
+                        drawRectRef.current = { sHeight: vHeight, sWidth: vHeight * cRatio, sx: (vWidth - (vHeight * cRatio)) / 2, sy: 0 };
+                    } else {
+                        drawRectRef.current = { sWidth: vWidth, sHeight: vWidth / cRatio, sx: 0, sy: (vHeight - (vWidth / cRatio)) / 2 };
+                    }
+                    lastRenderedTimeRef.current = -1;
+                };
+
+                const sectionObserver = new IntersectionObserver(([entry]) => {
+                    isVideoSectionVisible.current = entry.isIntersecting;
+                    if (entry.isIntersecting) {
+                        updateMetrics();
+                        if (video && video.readyState < 2) video.load();
+                    }
+                }, { threshold: 0 });
+
+                if (section) sectionObserver.observe(section);
+                if (video) video.addEventListener('loadedmetadata', updateMetrics);
+                window.addEventListener('resize', updateMetrics);
+                updateMetrics();
+
+                return () => {
+                    if (section) sectionObserver.disconnect();
+                    video?.removeEventListener('loadedmetadata', updateMetrics);
+                    window.removeEventListener('resize', updateMetrics);
+                };
+            }, [page, isTeaser]);
 
             useEffect(() => {
                 document.body.style.overflow = isMenuOpen ? 'hidden' : 'unset';
@@ -828,7 +1059,14 @@
                 <div className="min-h-screen bg-white">
                     <Navbar page={page} navigateTo={navigateTo} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
                     <main>
-                        {page === 'home' && <HomePage navigateTo={navigateTo} />}
+                        {page === 'home' && (
+                            <HomePage 
+                                canvasRef={canvasRef} 
+                                videoRef={videoRef} 
+                                overlayRef={overlayRef} 
+                                navigateTo={navigateTo} 
+                            />
+                        )}
                         {page === 'products' && <ProductsPage navigateTo={navigateTo} />}
                         {page === 'detail' && <DetailPage product={selectedProduct} navigateTo={navigateTo} />}
                     </main>

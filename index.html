@@ -124,13 +124,13 @@
             </svg>
         ));
 
-        // --- 상품 데이터 및 배경 인라인 스타일 그라디언트 맵 정의 ---
+        // --- 상품 데이터 및 배경 인라인 스타일 그라디언트 맵 정의 (가격 정보 500원 인상 반영) ---
         const CATEGORIES = [
             { 
                 id: 1, 
                 name: '빈티지 에디션', 
-                price: '₩2,000 ~ ₩4,000', 
-                detailPrice: { phone: '₩2,000', computer: '₩4,000' }, 
+                price: '₩2,500 ~ ₩4,500', 
+                detailPrice: { phone: '₩2,500', computer: '₩4,500' }, 
                 desc: '클래식하고 감성적인 레트로 무드의 빈티지 스티커',
                 img: 'pick_Mock-up_Vintage.png',
                 gradient: 'linear-gradient(to bottom, #E9E4DB, #C8BFA9)' // Warm Champagne Gold
@@ -138,8 +138,8 @@
             { 
                 id: 2, 
                 name: '유틸리티 에디션', 
-                price: '₩2,000 ~ ₩4,000', 
-                detailPrice: { phone: '₩2,000', computer: '₩4,000' }, 
+                price: '₩2,500 ~ ₩4,500', 
+                detailPrice: { phone: '₩2,500', computer: '₩4,500' }, 
                 desc: '테크니컬하고 실용적인 인더스트리얼 감성의 유틸리티 스티커',
                 img: 'pick_Mock-up_Utility.png',
                 gradient: 'linear-gradient(to bottom, #E3E4E5, #999DA0)' // Natural Titanium Gray
@@ -147,8 +147,8 @@
             { 
                 id: 3, 
                 name: '스마일 에디션', 
-                price: '₩2,000 ~ ₩4,000', 
-                detailPrice: { phone: '₩2,000', computer: '₩4,000' }, 
+                price: '₩2,500 ~ ₩4,500', 
+                detailPrice: { phone: '₩2,500', computer: '₩4,500' }, 
                 desc: '보기만 해도 미소가 지어지는 유쾌하고 귀여운 스마일 캐릭터 스티커',
                 img: 'pick_Mock-up_smail.png',
                 gradient: 'linear-gradient(to bottom, #FFF3C4, #F7C665)' // Radiant Sunny Yellow
@@ -156,8 +156,8 @@
             { 
                 id: 4, 
                 name: '스트릿 에디션', 
-                price: '₩2,000 ~ ₩4,000', 
-                detailPrice: { phone: '₩2,000', computer: '₩4,000' }, 
+                price: '₩2,500 ~ ₩4,500', 
+                detailPrice: { phone: '₩2,500', computer: '₩4,000' }, 
                 desc: '자유분방하고 트렌디한 스트릿 문화 감성의 스트릿 스티커',
                 img: 'pick_Mock-up_street.png',
                 gradient: 'linear-gradient(to bottom, #E8E6FC, #B0A6EB)' // Cool Urban Purple-Blue
@@ -165,20 +165,20 @@
             { 
                 id: 5, 
                 name: 'Y2K 에디션', 
-                price: '₩2,000 ~ ₩4,000', 
-                detailPrice: { phone: '₩2,000', computer: '₩4,000' }, 
+                price: '₩2,500 ~ ₩4,500', 
+                detailPrice: { phone: '₩2,500', computer: '₩4,500' }, 
                 desc: '세기말 세련된 감성과 미래주의를 담아낸 Y2K 스티커',
                 img: 'pick_Mock-up_y2k.png',
                 gradient: 'linear-gradient(to bottom, #E3F2FD, #FCE4EC)' // Iridescent Millennium Pastel
             }
         ];
 
-        // --- 세트리스트 데이터 정의 ---
+        // --- 세트리스트 데이터 정의 (가격 정보 500원 인상 반영) ---
         const BUNDLES = [
             { 
                 title: '핸드폰 스티커 (작은 사이즈)', 
                 subtitle: 'Phone Sticker', 
-                price: '₩2,000', 
+                price: '₩2,500', 
                 features: ['핸드폰, 스마트 키, 무선이어폰 케이스 등 소형 기기 최적화', '기기 후면에 부착 시 완벽한 핏을 구현하는 미니 사이즈', '우수한 고정력과 생활 방수 코팅 마감'], 
                 tag: 'Small Size', 
                 highlight: true 
@@ -186,7 +186,7 @@
             { 
                 title: '컴퓨터 스티커 (큰 사이즈)', 
                 subtitle: 'Computer Sticker', 
-                price: '₩4,000', 
+                price: '₩4,500', 
                 features: ['노트북, 데스크톱 본체, 아이패드 및 태블릿 후면용', '큼직한 존재감으로 확실한 개성을 나타내는 라지 사이즈', '자국 없이 깔끔하게 제거되는 이지 오프 특수 재질'], 
                 tag: 'Large Size', 
                 highlight: false 
@@ -302,7 +302,16 @@
         const HomePage = memo(({ navigateTo }) => (
             <div className="bg-white">
                 <section className="h-screen w-full relative flex flex-col items-center overflow-hidden">
-                    <div className="absolute inset-0 bg-[#f5f5f7] z-0"></div>
+                    {/* 메인 홈 페이지 배경 이미지 설정 (main_v2_00000.png) */}
+                    <div className="absolute inset-0 z-0">
+                        <img 
+                            src="main_v2_00000.png" 
+                            alt="Main Background" 
+                            className="w-full h-full object-cover"
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                        <div className="absolute inset-0 bg-[#f5f5f7] -z-10"></div>
+                    </div>
                     <div className="z-10 text-center pt-48 px-6 md:px-24 max-w-7xl mx-auto">
                         <Reveal>
                             <PathIndicator path="/home" />
@@ -353,55 +362,40 @@
                     </div>
                 </section>
 
-                
-{/* 03 Harmony 전용 독립 세션 */}
-<section className="bg-[#f5f5f7] pt-24 pb-0 md:py-0 md:h-[650px] relative overflow-hidden z-10 border-t border-b border-gray-100">
-    <div className="max-w-7xl mx-auto h-full grid md:grid-cols-12 gap-8 items-center px-6 md:px-24 relative">
-        
-        {/* 텍스트 영역 */}
-        <Reveal className="md:col-span-5 md:py-24 z-20">
-            <div className="space-y-8 text-[#1d1d1f]">
-                <span className="text-xs font-semibold text-purple-600 uppercase tracking-[0.2em]">
-                    03 Harmony
-                </span>
+                {/* 03 Harmony 전용 독립 세션 */}
+                <section className="bg-[#f5f5f7] pt-24 pb-0 md:py-0 md:h-[650px] relative overflow-hidden z-10 border-t border-b border-gray-100">
+                    <div className="max-w-7xl mx-auto h-full grid md:grid-cols-12 gap-8 items-center px-6 md:px-24 relative">
+                        <Reveal className="md:col-span-5 md:py-24 z-20">
+                            <div className="space-y-8 text-[#1d1d1f]">
+                                <span className="text-xs font-semibold text-purple-600 uppercase tracking-[0.2em]">03 Harmony</span>
+                                <h2 className="text-4xl md:text-6xl font-bold tracking-tight leading-[1.1]">어디서나,<br/>자연스럽게.</h2>
+                                <p className="text-[#86868b] text-base md:text-lg leading-relaxed font-medium break-keep">
+                                    노트북, 태블릿, 스마트폰 등 손길이 닿는 어떤 소품이나 공간에 매치해도 고유의 세련된 무드를 연출합니다. 대상의 한계를 넘어 경계 없이 녹아드는 감각적인 조화를 느껴보세요.
+                                </p>
+                            </div>
+                        </Reveal>
 
-                <h2 className="text-4xl md:text-6xl font-bold tracking-tight leading-[1.1]">
-                    어디서나,<br/>
-                    자연스럽게.
-                </h2>
+                        {/* 모바일 환경 */}
+                        <div className="block md:hidden w-full aspect-[16/10] mt-8 z-10">
+                            <img 
+                                src="Example_mockup.png" 
+                                alt="Harmony Mockup" 
+                                className="w-full h-full object-contain" 
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                        </div>
+                    </div>
 
-                <p className="text-[#86868b] text-base md:text-lg leading-relaxed font-medium break-keep">
-                    노트북, 태블릿, 스마트폰 등 손길이 닿는 어떤 소품이나 공간에 매치해도
-                    고유의 세련된 무드를 연출합니다. 대상의 한계를 넘어 경계 없이
-                    녹아드는 감각적인 조화를 느껴보세요.
-                </p>
-            </div>
-        </Reveal>
-
-        {/* 데스크톱 이미지 영역 */}
-        <div className="hidden md:flex absolute right-0 bottom-0 w-[52%] lg:w-[56%] h-[90%] z-10 items-end justify-end pointer-events-none">
-            <img 
-                src="Example_mockup.png" 
-                alt="Harmony Mockup"
-                className="w-full h-full object-contain object-right-bottom scale-110"
-                onError={(e) => { e.target.style.display = 'none'; }}
-            />
-        </div>
-
-        {/* 모바일 이미지 영역 */}
-        <div className="block md:hidden w-full aspect-[16/10] mt-8 z-10">
-            <img 
-                src="Example_mockup.png" 
-                alt="Harmony Mockup"
-                className="w-full h-full object-contain"
-                onError={(e) => { e.target.style.display = 'none'; }}
-            />
-        </div>
-
-    </div>
-</section>
-
-
+                    {/* 데스크톱 환경 */}
+                    <div className="hidden md:block absolute right-0 bottom-0 w-[50%] lg:w-[55%] h-[85%] z-10">
+                        <img 
+                            src="Example_mockup.png" 
+                            alt="Harmony Mockup" 
+                            className="w-full h-full object-contain object-right-bottom" 
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                    </div>
+                </section>
 
                 {/* READY TO PICK 세션 */}
                 <section className="py-64 text-center bg-white px-6 md:px-12 relative z-10">
@@ -450,7 +444,7 @@
                                             {cat.desc}
                                         </p>
                                         <div className="text-lg md:text-xl font-bold text-[#1d1d1f] mb-8">
-                                            ₩2,000부터
+                                            ₩2,500부터
                                         </div>
                                         
                                         {/* 듀얼 액션 버튼 구성 */}
@@ -492,7 +486,7 @@
                                         <img 
                                             src="Example_mockup.png" 
                                             alt="Example Laptop and Phone Mockup" 
-                                            className="w-full h-full object-cover"
+                                            className="w-full h-full object-contain"
                                             onError={(e) => { e.target.style.display = 'none'; }}
                                         />
                                     </div>
@@ -567,7 +561,6 @@
                 const handleWheel = (e) => {
                     if (scale === 1) return;
                     
-                    // 터치패드 좌우 제스처로 브라우저 히스토리(뒤로가기/앞으로가기)가 실행되는 현상을 완벽히 차단
                     e.preventDefault();
 
                     setPosition((prev) => ({
@@ -576,7 +569,6 @@
                     }));
                 };
 
-                // passive: false를 주기 위해 React inline event가 아닌 수동 addEventListener를 사용합니다.
                 modalEl.addEventListener('wheel', handleWheel, { passive: false });
                 
                 return () => {
@@ -593,7 +585,6 @@
 
             const toggleMagnify = (e) => {
                 e.stopPropagation();
-                // 드래그 거리가 일정량 이상일 때는 축소 토글을 생략하여 이미지가 튀는 현상 방지
                 if (scale > 1 && dragDistance.current > 8) {
                     return;
                 }
@@ -697,7 +688,7 @@
                             </div>
                         </div>
 
-                        {/* 상세 페이지 하단 노트북 & 핸드폰 스티커 예시 세션 추가 (회색 박스 사각 틀 제거 가공) */}
+                        {/* 상세 페이지 하단 노트북 & 핸드폰 스티커 예시 세션 추가 (회색 사각 프레임 해제) */}
                         <div className="pt-24 border-t border-gray-100 mt-20">
                             <div className="mb-12 text-center">
                                 <span className="text-xs font-semibold text-black uppercase tracking-[0.2em]">Mockup Guide</span>
@@ -713,7 +704,7 @@
                                             <img 
                                                 src="Example_mockup.png" 
                                                 alt="Example Laptop and Phone Mockup" 
-                                                className="w-full h-full object-cover"
+                                                className="w-full h-full object-contain"
                                                 onError={(e) => { e.target.style.display = 'none'; }}
                                             />
                                         </div>

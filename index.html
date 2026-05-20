@@ -227,6 +227,10 @@
                     </div>
                 </section>
 
+                {/* ====================================================
+                    스크롤 비디오 섹션
+                    - video 태그와 overlay 텍스트는 ref로 직접 제어
+                    ==================================================== */}
                 <section id="ready-scrolly-section" className="relative h-[300vh] bg-[#f5f5f7]">
                     <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden bg-[#f5f5f7]">
                         <video
@@ -432,8 +436,19 @@
             const [page, setPage] = useState('home');
             const [selectedProduct, setSelectedProduct] = useState(null);
             const [isMenuOpen, setIsMenuOpen] = useState(false);
+
             const videoRef = useRef(null);
             const overlayRef = useRef(null);
+
+            // ====================================================
+            // ✅ 새로 추가된 ref 3개
+            // sectionMetaRef : 섹션 위치를 한 번만 계산해서 저장
+            // targetTimeRef  : scroll이 원하는 비디오 시간을 저장
+            // rafIdRef       : RAF 루프 ID (cleanup에 사용)
+            // ====================================================
+            const sectionMetaRef = useRef(null);
+            const targetTimeRef  = useRef(0);
+            const rafIdRef       = useRef(null);
 
             const syncPageWithHash = useCallback(() => {
                 const hash = window.location.hash;
@@ -455,22 +470,59 @@
                 syncPageWithHash();
                 window.addEventListener('hashchange', syncPageWithHash);
 
+                // ====================================================
+                // ✅ STEP 1: scroll 이벤트 — targetTime 변수만 업데이트
+                //    DOM이나 video를 절대 건드리지 않음
+                // ====================================================
                 const handleScroll = () => {
-                    const section = document.getElementById('ready-scrolly-section');
+                    // 섹션 위치는 처음 한 번만 계산해서 저장 (매번 계산하면 느려짐)
+                    if (!sectionMetaRef.current) {
+                        const section = document.getElementById('ready-scrolly-section');
+                        if (!section) return;
+                        sectionMetaRef.current = {
+                            offsetTop: section.offsetTop,
+                            scrollHeight: section.offsetHeight - window.innerHeight
+                        };
+                    }
+
+                    const { offsetTop, scrollHeight } = sectionMetaRef.current;
+                    if (scrollHeight <= 0) return;
+
+                    const scrollY = window.pageYOffset;
+
+                    // 0~1 사이의 스크롤 진행도 계산
+                    const progress = Math.max(0, Math.min(1, (scrollY - offsetTop) / scrollHeight));
+
+                    const video = videoRef.current;
+                    if (video && video.duration) {
+                        // ✅ 비디오 시간 목표값만 저장 (실제 변경은 RAF에서)
+                        targetTimeRef.current = progress * video.duration;
+                    }
+
+                    // overlay용 progress도 저장
+                    sectionMetaRef.current.progress = progress;
+                };
+
+                // ====================================================
+                // ✅ STEP 2: RAF 렌더링 루프 — 실제 비디오/오버레이 업데이트
+                //    브라우저가 화면을 그릴 준비가 됐을 때만 실행됨
+                // ====================================================
+                const renderLoop = () => {
                     const video = videoRef.current;
                     const overlay = overlayRef.current;
-                    if (!section) return;
-                    const offsetTop = section.offsetTop;
-                    const scrollHeight = section.offsetHeight - window.innerHeight;
-                    if (scrollHeight <= 0) return;
-                    const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-                    const progress = Math.max(0, Math.min(1, (scrollY - offsetTop) / scrollHeight));
-                    if (video && video.duration) {
-                        video.currentTime = progress * video.duration;
+
+                    if (video) {
+                        // ✅ seeking 중이 아닐 때만 업데이트 (디코더 대기열 방지)
+                        if (!video.seeking) {
+                            video.currentTime = targetTimeRef.current;
+                        }
                     }
-                    if (overlay) {
+
+                    // overlay 투명도/위치 업데이트
+                    if (overlay && sectionMetaRef.current) {
+                        const progress = sectionMetaRef.current.progress ?? 0;
                         if (progress > 0.75) {
-                            const alpha = (progress - 0.75) * 4;
+                            const alpha = Math.min(1, (progress - 0.75) * 4);
                             overlay.style.opacity = alpha;
                             overlay.style.transform = `translateY(${(1 - alpha) * 20}px)`;
                             overlay.style.pointerEvents = 'auto';
@@ -480,12 +532,23 @@
                             overlay.style.pointerEvents = 'none';
                         }
                     }
+
+                    // 루프 계속 실행 (ID 저장해야 나중에 정확히 끌 수 있음)
+                    rafIdRef.current = requestAnimationFrame(renderLoop);
                 };
 
                 window.addEventListener('scroll', handleScroll, { passive: true });
+
+                // RAF 루프 시작
+                rafIdRef.current = requestAnimationFrame(renderLoop);
+
+                // ====================================================
+                // ✅ STEP 3: cleanup — 페이지 벗어날 때 루프/이벤트 정리
+                // ====================================================
                 return () => {
                     window.removeEventListener('hashchange', syncPageWithHash);
                     window.removeEventListener('scroll', handleScroll);
+                    cancelAnimationFrame(rafIdRef.current); // RAF 루프 종료
                 };
             }, [syncPageWithHash, isTeaser]);
 

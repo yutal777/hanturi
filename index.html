@@ -367,49 +367,29 @@
                     </div>
                 </section>
 
-                {/* 03 Harmony 전용 독립 세션 (텍스트 가로폭 제한 및 이미지를 우측 정렬 끝에서 좌측 방향으로 강제 당김) */}
-                <section className="bg-[#f5f5f7] pt-24 pb-0 md:py-0 md:h-[650px] relative overflow-hidden z-10 border-t border-b border-gray-100">
-                    <div className="max-w-7xl mx-auto h-full grid md:grid-cols-12 gap-8 items-center px-6 md:px-24 relative">
-                        <Reveal className="md:col-span-4 md:py-24 z-20 max-w-sm">
-                            <div className="space-y-8 text-[#1d1d1f]">
-                                <h2 className="text-4xl md:text-6xl font-bold tracking-tight leading-[1.1]">어디서나,<br/>자연스럽게.</h2>
-                                <p className="text-[#86868b] text-base md:text-lg leading-relaxed font-medium break-keep">
-                                    노트북, 태블릿, 스마트폰 등 손길이 닿는 어떤 소품이나 공간에 매치해도 고유의 세련된 무드를 연출합니다. 대상의 한계를 넘어 경계 없이 녹아드는 감각적인 조화를 느껴보세요.
-                                </p>
-                            </div>
-                        </Reveal>
+                {{/* 03 Harmony 섹션 */}
+<section className="bg-[#f5f5f7] pt-24 pb-0 md:py-0 md:h-[650px] relative overflow-hidden z-10 border-t border-b border-gray-100">
+    <div className="max-w-7xl mx-auto h-full grid md:grid-cols-12 gap-8 items-center px-6 md:px-24 relative">
+        <Reveal className="md:col-span-5 md:py-24 z-20 max-w-sm">
+            <div className="space-y-8 text-[#1d1d1f]">
+                <h2 className="text-4xl md:text-6xl font-bold tracking-tight leading-[1.1]">어디서나,<br/>자연스럽게.</h2>
+                <p className="text-[#86868b] text-base md:text-lg leading-relaxed font-medium break-keep">
+                    노트북, 태블릿, 스마트폰 등 손길이 닿는 어떤 소품이나 공간에 매치해도 고유의 세련된 무드를 연출합니다. 대상의 한계를 넘어 경계 없이 녹아드는 감각적인 조화를 느껴보세요.
+                </p>
+            </div>
+        </Reveal>
 
-                        {/* 모바일 환경 */}
-                        <div className="block md:hidden w-full aspect-[16/10] mt-8 z-10">
-                            <img 
-                                src="Example_mockup.png" 
-                                alt="Harmony Mockup" 
-                                className="w-full h-full object-contain" 
-                                onError={(e) => { e.target.style.display = 'none'; }}
-                            />
-                        </div>
-                    </div>
+        {/* 모바일 */}
+        <div className="block md:hidden w-full aspect-[16/10] mt-8 z-10">
+            <img src="Example_mockup.png" alt="Harmony Mockup" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
+        </div>
+    </div>
 
-                    {/* 데스크톱 환경 (우측 정렬 오프셋을 증량하여 이미지를 텍스트 바깥 좌측 방향으로 가시 배치) */}
-                    <div className="hidden md:block absolute right-40 md:right-64 lg:right-80 bottom-0 w-[50%] lg:w-[55%] h-[85%] z-10">
-                        <img 
-                            src="Example_mockup.png" 
-                            alt="Harmony Mockup" 
-                            className="w-full h-full object-contain object-right-bottom" 
-                            onError={(e) => { e.target.style.display = 'none'; }}
-                        />
-                    </div>
-                </section>
-
-                {/* READY TO PICK 세션 */}
-                <section className="py-64 text-center bg-white px-6 md:px-12 relative z-10">
-                    <Reveal>
-                        <h2 className="text-5xl md:text-7xl font-semibold tracking-tight mb-16 text-[#1d1d1f]">READY TO PICK?</h2>
-                        <button onClick={() => navigateTo('#/products')} className="group inline-flex items-center gap-4 text-xl font-medium text-black hover:underline underline-offset-8 decoration-2">
-                            전체 에디션 보기 <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
-                        </button>
-                    </Reveal>
-                </section>
+    {/* 데스크톱 — 완전히 우측 끝에 고정 */}
+    <div className="hidden md:block absolute right-0 bottom-0 w-[55%] h-[90%] z-10">
+        <img src="Example_mockup.png" alt="Harmony Mockup" className="w-full h-full object-contain object-right-bottom" onError={(e) => { e.target.style.display = 'none'; }} />
+    </div>
+</section>
             </div>
         ));
 

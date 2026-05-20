@@ -468,7 +468,7 @@
             </div>
         ));
 
-        // --- 상세 페이지 컴포넌트 (버그 수정, 이동 제어 및 상세 하단 목업 세션 추가) ---
+        // --- 상세 페이지 컴포넌트 ---
         const DetailPage = memo(({ product, navigateTo }) => {
             const [isZoomed, setIsZoomed] = useState(false);
             const [scale, setScale] = useState(1);
@@ -616,7 +616,8 @@
                                 </div>
                             </div>
                             <div className="flex flex-col">
-                                <h1 className="text-6xl md:text-8xl font-semibold tracking-tight mb-10 leading-tight">{product?.name}</h1>
+                                {/* 4글자 이상일 경우 줄바꿈이 되지 않도록 폰트 크기 축소 및 whitespace-nowrap 처리 */}
+                                <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight mb-10 leading-tight whitespace-nowrap">{product?.name}</h1>
                                 <p className="text-xl md:text-2xl text-[#86868b] mb-16 leading-relaxed font-medium break-keep">{product?.desc}</p>
                                 <div className="space-y-8 mb-20 border-t border-gray-100 pt-12 text-sm font-medium">
                                     <div className="flex justify-between items-start gap-12">

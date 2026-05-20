@@ -35,10 +35,10 @@
         body { 
             font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; 
             overflow-x: hidden;
-            /* 모바일 및 SPA 환경에서 페이지 이동 및 인스턴트 scrollTo 간 충돌 해결을 위해 부드러운 스크롤 제거 */
         }
         
         .font-semibold { font-weight: 600; }
+        .font-bold { font-weight: 700; }
         .font-medium { font-weight: 500; }
         .font-normal { font-weight: 400; }
 
@@ -883,25 +883,31 @@
                 const canvas = canvasRef.current;
                 
                 let lastWidth = window.innerWidth;
+                let lastHeight = window.innerHeight;
 
                 const updateMetrics = () => {
                     if (!section || !video || !canvas) return;
                     
                     const currentWidth = window.innerWidth;
-                    // 모바일 주소창 collapsing/expanding 등으로 높이만 변했을 때는 캔버스 물리 크기 업데이트를 생략하여 UI가 튀는 현상 차단
+                    const currentHeight = window.innerHeight;
+                    
+                    // 모바일 브라우저 주소창 스크롤 오프셋 가변 한도(보통 100px 이내) 범위의 미세 스크롤은 리사이징에서 제외하여 버퍼 재생성 lag(튀는 현상) 방지
                     const widthChanged = currentWidth !== lastWidth;
-                    lastWidth = currentWidth;
+                    const heightChanged = Math.abs(currentHeight - lastHeight) > 120; // 120px 이상의 디바이스 화면 리사이징이나 회전에만 물리 버퍼 갱신
 
                     sectionMetrics.current = {
                         offsetTop: section.offsetTop,
                         scrollHeight: section.offsetHeight - window.innerHeight
                     };
 
-                    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                    // 디바이스 물리적 매칭 해상도 한도를 최대 3 DPR까지 확보하여 Retina 디스플레이 최적 고화질 제공
+                    const dpr = Math.min(window.devicePixelRatio || 1, 3);
                     
-                    if (widthChanged || canvas.width === 0) {
-                        canvas.width = window.innerWidth * dpr;
-                        canvas.height = window.innerHeight * dpr;
+                    if (widthChanged || heightChanged || canvas.width === 0) {
+                        canvas.width = currentWidth * dpr;
+                        canvas.height = currentHeight * dpr;
+                        lastWidth = currentWidth;
+                        lastHeight = currentHeight;
                     }
 
                     if (video.videoWidth) {

@@ -28,7 +28,7 @@
         .teaser-fade-in { animation: teaserFadeIn 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes teaserFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ✅ 텍스트 오버레이 — 기본 상태 (숨김) */
+        /* 텍스트 오버레이 — 기본 상태 (숨김) */
         #scrolly-overlay {
             opacity: 0;
             transform: translateY(32px);
@@ -37,7 +37,7 @@
                         transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
-        /* ✅ 70% 도달 시 클래스 추가되면 자연스럽게 위로 등장 */
+        /* 70% 도달 시 클래스 추가되면 자연스럽게 위로 등장 */
         #scrolly-overlay.overlay-visible {
             opacity: 1;
             transform: translateY(0);
@@ -254,7 +254,6 @@
                             preload="auto"
                             className="absolute inset-0 w-full h-full object-contain"
                         />
-                        {/* ✅ id 추가, 인라인 style 제거 — CSS가 전담 */}
                         <div
                             ref={overlayRef}
                             id="scrolly-overlay"
@@ -328,7 +327,7 @@
                                         <h3 className="text-2xl font-semibold mb-2">{bundle.title}</h3>
                                         <p className="text-[#86868b] text-sm mb-6">{bundle.subtitle}</p>
                                         <div className="text-4xl font-semibold tracking-tight mb-10">{bundle.price}</div>
-                                        <ul className="space-y-4 flex-1">
+                                        <ul className="space-y-4 mb-12 flex-1">
                                             {bundle.features.map((f, i) => (
                                                 <li key={i} className="flex items-start gap-3 text-sm text-gray-500 font-medium leading-tight"><CheckIcon size={16} className="text-blue-600 mt-0.5 shrink-0" /> {f}</li>
                                             ))}
@@ -445,6 +444,7 @@
             );
         });
 
+        // --- Main App ---
         function App() {
             const [isTeaser, setIsTeaser] = useState(() => new Date().getTime() < TARGET_TIME);
             const [page, setPage] = useState('home');
@@ -475,12 +475,39 @@
                 syncPageWithHash();
                 window.addEventListener('hashchange', syncPageWithHash);
 
-                // ✅ 개선된 scroll 핸들러 — RAF 루프 없음
+                // 모바일 Safari 및 브라우저 미디어 디코더 제한 해제(Unlock)용 직접 핸들러
+                const unlockMobileVideo = () => {
+                    const video = videoRef.current;
+                    if (video) {
+                        video.muted = true;
+                        video.playsInline = true;
+                        video.setAttribute('muted', '');
+                        video.setAttribute('playsinline', '');
+                        
+                        // 강제 수동 로드 촉진 후 정지
+                        const playPromise = video.play();
+                        if (playPromise !== undefined) {
+                            playPromise.then(() => {
+                                video.pause();
+                            }).catch(() => {
+                                // 정책에 의해 미디어 제어 거부될 경우 무시
+                            });
+                        }
+                    }
+                    // 리스너 자원 해제
+                    window.removeEventListener('touchstart', unlockMobileVideo);
+                    window.removeEventListener('click', unlockMobileVideo);
+                    window.removeEventListener('scroll', unlockMobileVideo);
+                };
+
+                window.addEventListener('touchstart', unlockMobileVideo, { passive: true });
+                window.addEventListener('click', unlockMobileVideo, { passive: true });
+                window.addEventListener('scroll', unlockMobileVideo, { passive: true });
+
                 let lastSetTime = -1;
-                const THRESHOLD = 0.04; // 0.04초 미만 변화는 무시 (디코더 과부하 방지)
+                const THRESHOLD = 0.008; // 60fps 무손실 제어를 위한 정밀 프레임 오차 데드존 수축 (0.008초)
 
                 const handleScroll = () => {
-                    // 섹션 위치는 처음 한 번만 계산
                     if (!sectionMetaRef.current) {
                         const section = document.getElementById('ready-scrolly-section');
                         if (!section) return;
@@ -497,17 +524,25 @@
                         (window.pageYOffset - offsetTop) / scrollHeight
                     ));
 
-                    // ── 비디오 currentTime 업데이트 ──────────────────
                     const video = videoRef.current;
-                    if (video && video.duration && !video.seeking) {
-                        const target = progress * video.duration;
-                        if (Math.abs(target - lastSetTime) >= THRESHOLD) {
-                            video.currentTime = target;
-                            lastSetTime = target;
+                    if (video) {
+                        // 미디어 준비 상태 검증 및 로드 예외 처리 가공
+                        if (isNaN(video.duration) || video.duration === 0) {
+                            if (video.readyState === 0) {
+                                video.load();
+                            }
+                            return;
+                        }
+
+                        if (!video.seeking) {
+                            const target = progress * video.duration;
+                            if (Math.abs(target - lastSetTime) >= THRESHOLD) {
+                                video.currentTime = target;
+                                lastSetTime = target;
+                            }
                         }
                     }
 
-                    // ── 텍스트: 70% 도달 시 CSS 클래스만 토글 ────────
                     const overlay = overlayRef.current;
                     if (overlay) {
                         if (progress >= 0.70) {
@@ -523,6 +558,9 @@
                 return () => {
                     window.removeEventListener('hashchange', syncPageWithHash);
                     window.removeEventListener('scroll', handleScroll);
+                    window.removeEventListener('touchstart', unlockMobileVideo);
+                    window.removeEventListener('click', unlockMobileVideo);
+                    window.removeEventListener('scroll', unlockMobileVideo);
                 };
             }, [syncPageWithHash, isTeaser]);
 

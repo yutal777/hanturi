@@ -102,6 +102,9 @@
     <script type="text/babel">
         const { useState, useEffect, useCallback, useRef, memo } = React;
 
+        // --- 기준 타겟 시간 상수 정의 (KST 기준 2026년 5월 20일 20시 정각) ---
+        const TARGET_TIME = new Date('2026-05-20T20:00:00+09:00').getTime();
+
         // --- 공유 Observer (효율적인 스크롤 애니메이션) ---
         const globalObserver = typeof IntersectionObserver !== 'undefined' 
             ? new IntersectionObserver((entries) => {
@@ -234,20 +237,67 @@
             return <div ref={ref} className={`reveal ${className}`}>{children}</div>;
         });
 
-        // --- 티저 페이지 컴포넌트 ---
-        const ComingSoonPage = memo(({ onBypass }) => (
-            <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 text-center teaser-fade-in bg-white">
-                <div className="text-[12px] font-semibold tracking-[0.4em] text-gray-300 uppercase mb-8 select-none">
-                    PICK BRAND
+        // --- 티저 페이지 컴포넌트 (실시간 카운트다운 탑재) ---
+        const ComingSoonPage = memo(({ onBypass }) => {
+            const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0, expired: false });
+
+            useEffect(() => {
+                const updateCountdown = () => {
+                    const now = new Date().getTime();
+                    const difference = TARGET_TIME - now;
+
+                    if (difference <= 0) {
+                        setTimeLeft({ hours: 0, minutes: 0, seconds: 0, expired: true });
+                        onBypass(); // 타이머가 완료되면 자동으로 상위 컴포넌트의 티저 모드 해제
+                        return;
+                    }
+
+                    const hours = Math.floor(difference / (1000 * 60 * 60));
+                    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+                    setTimeLeft({ hours, minutes, seconds, expired: false });
+                };
+
+                updateCountdown();
+                const timer = setInterval(updateCountdown, 1000);
+                return () => clearInterval(timer);
+            }, [onBypass]);
+
+            return (
+                <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 text-center teaser-fade-in bg-white">
+                    <div className="text-[12px] font-semibold tracking-[0.4em] text-gray-300 uppercase mb-8 select-none">
+                        PICK BRAND
+                    </div>
+                    <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-tight text-[#1d1d1f] select-none mb-6" style={{ letterSpacing: '-0.05em' }}>
+                        5월 20일 20:00, 공개.
+                    </h1>
+
+                    {!timeLeft.expired && (
+                        <div className="flex gap-4 md:gap-6 text-3xl md:text-5xl font-bold text-black mb-10 select-none">
+                            <div className="flex flex-col items-center min-w-[60px] md:min-w-[80px]">
+                                <span>{String(timeLeft.hours).padStart(2, '0')}</span>
+                                <span className="text-[9px] md:text-[10px] text-gray-400 uppercase tracking-widest mt-2">Hours</span>
+                            </div>
+                            <span>:</span>
+                            <div className="flex flex-col items-center min-w-[60px] md:min-w-[80px]">
+                                <span>{String(timeLeft.minutes).padStart(2, '0')}</span>
+                                <span className="text-[9px] md:text-[10px] text-gray-400 uppercase tracking-widest mt-2">Minutes</span>
+                            </div>
+                            <span>:</span>
+                            <div className="flex flex-col items-center min-w-[60px] md:min-w-[80px]">
+                                <span>{String(timeLeft.seconds).padStart(2, '0')}</span>
+                                <span className="text-[9px] md:text-[10px] text-gray-400 uppercase tracking-widest mt-2">Seconds</span>
+                            </div>
+                        </div>
+                    )}
+
+                    <p className="mt-6 text-[#86868b] text-base md:text-lg font-medium tracking-tight uppercase select-none">
+                        A choice uniquely <span onClick={onBypass} className="cursor-default hover:text-black transition-colors duration-300 select-all">mine</span>
+                    </p>
                 </div>
-                <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-tight text-[#1d1d1f] select-none" style={{ letterSpacing: '-0.05em' }}>
-                    5월 20일 20:00, 공개.
-                </h1>
-                <p className="mt-6 text-[#86868b] text-base md:text-lg font-medium tracking-tight uppercase select-none">
-                    A choice uniquely <span onClick={onBypass} className="cursor-default hover:text-black transition-colors duration-300 select-all">mine</span>
-                </p>
-            </div>
-        ));
+            );
+        });
 
         const Navbar = memo(({ page, navigateTo, isMenuOpen, setIsMenuOpen }) => (
             <nav className="fixed top-0 left-0 w-full z-[80] bg-white/70 backdrop-blur-md border-b border-gray-100 px-6 md:px-24 py-5 flex justify-between items-center">
@@ -360,7 +410,7 @@
                 <div className="max-w-7xl mx-auto">
                     <Reveal><PathIndicator path="/products" /></Reveal>
                     <div className="mb-20 text-center mt-12">
-                        <h1 className="text-5xl md:text-8xl font-semibold tracking-tight leading-tight">Our Edition</h1>
+                        <h1 className="text-5xl md:text-8xl font-semibold tracking-tight leading-tight">Our Variety</h1>
                         <p className="text-[#86868b] mt-8 text-lg font-medium">당신의 스타일을 완성할 5가지 독창적인 에디션</p>
                     </div>
 
@@ -714,7 +764,10 @@
 
         // --- Main App ---
         function App() {
-            const [isTeaser, setIsTeaser] = useState(true); // 기본값: 티저 모드 진입
+            // 현재 시간을 기준으로 티저 상태 활성화 유무 초기값 설정 (정시 이전인 경우에만 티저 렌더링)
+            const [isTeaser, setIsTeaser] = useState(() => {
+                return new Date().getTime() < TARGET_TIME;
+            });
             const [page, setPage] = useState('home');
             const [selectedProduct, setSelectedProduct] = useState(null);
             const [isMenuOpen, setIsMenuOpen] = useState(false);

@@ -147,7 +147,7 @@
             </svg>
         ));
 
-        // --- 상품 데이터 정의 ---
+        // --- 상품 데이터 및 배경 인라인 스타일 그라디언트 맵 정의 ---
         const CATEGORIES = [
             { 
                 id: 1, 
@@ -156,7 +156,7 @@
                 detailPrice: { phone: '₩2,000', computer: '₩4,000' }, 
                 desc: '클래식하고 감성적인 레트로 무드의 빈티지 스티커',
                 img: 'pick_Mock-up_Vintage.png',
-                gradient: 'from-[#E9E4DB] to-[#C8BFA9]' // Warm Champagne Gold
+                gradient: 'linear-gradient(to bottom, #E9E4DB, #C8BFA9)' // Warm Champagne Gold
             },
             { 
                 id: 2, 
@@ -165,7 +165,7 @@
                 detailPrice: { phone: '₩2,000', computer: '₩4,000' }, 
                 desc: '테크니컬하고 실용적인 인더스트리얼 감성의 유틸리티 스티커',
                 img: 'pick_Mock-up_Utility.png',
-                gradient: 'from-[#E3E4E5] to-[#999DA0]' // Natural Titanium Gray
+                gradient: 'linear-gradient(to bottom, #E3E4E5, #999DA0)' // Natural Titanium Gray
             },
             { 
                 id: 3, 
@@ -174,7 +174,7 @@
                 detailPrice: { phone: '₩2,000', computer: '₩4,000' }, 
                 desc: '보기만 해도 미소가 지어지는 유쾌하고 귀여운 스마일 캐릭터 스티커',
                 img: 'pick_Mock-up_smail.png',
-                gradient: 'from-[#FFF3C4] to-[#F7C665]' // Radiant Sunny Yellow
+                gradient: 'linear-gradient(to bottom, #FFF3C4, #F7C665)' // Radiant Sunny Yellow
             },
             { 
                 id: 4, 
@@ -183,7 +183,7 @@
                 detailPrice: { phone: '₩2,000', computer: '₩4,000' }, 
                 desc: '자유분방하고 트렌디한 스트릿 문화 감성의 스트릿 스티커',
                 img: 'pick_Mock-up_street.png',
-                gradient: 'from-[#E8E6FC] to-[#B0A6EB]' // Cool Urban Purple-Blue
+                gradient: 'linear-gradient(to bottom, #E8E6FC, #B0A6EB)' // Cool Urban Purple-Blue
             },
             { 
                 id: 5, 
@@ -192,7 +192,7 @@
                 detailPrice: { phone: '₩2,000', computer: '₩4,000' }, 
                 desc: '세기말 세련된 감성과 미래주의를 담아낸 Y2K 스티커',
                 img: 'pick_Mock-up_y2k.png',
-                gradient: 'from-[#E3F2FD] via-[#F3E5F5] to-[#FCE4EC]' // Iridescent Millennium Pastel
+                gradient: 'linear-gradient(to bottom, #E3F2FD, #FCE4EC)' // Iridescent Millennium Pastel
             }
         ];
 
@@ -323,7 +323,6 @@
                         </div>
                     </div>
                     <div className="grid md:grid-cols-2 gap-16 md:gap-32 items-center">
-                        {/* 퀄리티 섹션 맥북 이미지의 위치를 왼쪽으로 10% 이동 조정 */}
                         <div className="aspect-[4/5] order-2 md:order-1 flex items-center justify-center overflow-visible">
                             <img 
                                 src="Vintage_mac_Web.png" 
@@ -355,7 +354,7 @@
             </div>
         ));
 
-        // --- 수정된 ProductsPage 컴포넌트 ---
+        // --- ProductsPage 컴포넌트 ---
         const ProductsPage = memo(({ navigateTo }) => (
             <div className="bg-white min-h-screen pt-40 pb-40 px-6 md:px-24 text-[#1d1d1f]">
                 <div className="max-w-7xl mx-auto">
@@ -389,7 +388,7 @@
                                             />
                                         </div>
                                         {/* 핸드폰 목업 (노트북 앞 왼쪽 하단 겹침 - 업로드된 참조 이미지 구도 완벽 일치) */}
-                                        <div className="absolute left-[8%] bottom-[-5%] w-[25%] z-20">
+                                        <div className="absolute left-[10%] bottom-[8%] w-[22%] z-20">
                                             <img 
                                                 src="pick_Mock-up_Vintage.png" 
                                                 alt="Vintage Phone Mockup" 
@@ -417,7 +416,7 @@
                                             />
                                         </div>
                                         {/* 핸드폰 목업 (노트북 앞 왼쪽 하단 겹침) */}
-                                        <div className="absolute left-[8%] bottom-[-5%] w-[25%] z-20">
+                                        <div className="absolute left-[10%] bottom-[8%] w-[22%] z-20">
                                             <img 
                                                 src="pick_Mock-up_y2k.png" 
                                                 alt="Y2K Phone Mockup" 
@@ -442,7 +441,7 @@
                                 <div className="bg-[#f5f5f7] rounded-[2.5rem] p-8 md:p-10 flex flex-col items-center justify-between hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 relative overflow-visible">
                                     
                                     {/* 상단 이미지 영역: 패딩 p-8 및 object-contain을 갖추고, 기본 이미지 크기를 scale-[1.2]로 20% 확대 적용 */}
-                                    <div className={`w-full aspect-square rounded-[2rem] bg-gradient-to-b ${cat.gradient} relative shadow-inner overflow-hidden mb-6 flex items-center justify-center p-8`}>
+                                    <div className="w-full aspect-square rounded-[2rem] relative shadow-inner overflow-hidden mb-6 flex items-center justify-center p-8" style={{ background: cat.gradient }}>
                                         <img 
                                             src={cat.img} 
                                             alt={cat.name} 
@@ -522,7 +521,7 @@
                         <ArrowRight size={14} className="rotate-180" /> 목록으로 돌아가기
                     </button>
                     <div className="grid lg:grid-cols-2 gap-16 md:gap-32 mb-32 items-center">
-                        <div className={`aspect-square rounded-[3.5rem] bg-gradient-to-b ${product?.gradient || 'from-[#f5f5f7] to-[#e8e8ed]'} flex items-center justify-center relative shadow-sm overflow-hidden p-8`}>
+                        <div className={`aspect-square rounded-[3.5rem] bg-gradient-to-b ${product?.gradient || 'from-[#f5f5f7] to-[#e8e8ed]'} flex items-center justify-center relative shadow-sm overflow-hidden p-8`} style={{ background: product?.gradient }}>
                             <img 
                                 src={product?.img} 
                                 alt={product?.name} 

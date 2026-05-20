@@ -27,6 +27,22 @@
         ::-webkit-scrollbar { width: 0px; background: transparent; }
         .teaser-fade-in { animation: teaserFadeIn 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes teaserFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ✅ 텍스트 오버레이 — 기본 상태 (숨김) */
+        #scrolly-overlay {
+            opacity: 0;
+            transform: translateY(32px);
+            pointer-events: none;
+            transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+                        transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        /* ✅ 70% 도달 시 클래스 추가되면 자연스럽게 위로 등장 */
+        #scrolly-overlay.overlay-visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
     </style>
 </head>
 <body>
@@ -227,10 +243,7 @@
                     </div>
                 </section>
 
-                {/* ====================================================
-                    스크롤 비디오 섹션
-                    - video 태그와 overlay 텍스트는 ref로 직접 제어
-                    ==================================================== */}
+                {/* 스크롤 비디오 섹션 */}
                 <section id="ready-scrolly-section" className="relative h-[300vh] bg-[#f5f5f7]">
                     <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden bg-[#f5f5f7]">
                         <video
@@ -241,10 +254,11 @@
                             preload="auto"
                             className="absolute inset-0 w-full h-full object-contain"
                         />
+                        {/* ✅ id 추가, 인라인 style 제거 — CSS가 전담 */}
                         <div
                             ref={overlayRef}
+                            id="scrolly-overlay"
                             className="z-20 text-center px-6"
-                            style={{ opacity: 0, transform: 'translateY(20px)', pointerEvents: 'none', transition: 'none' }}
                         >
                             <h2 className="text-5xl md:text-7xl font-bold tracking-tight mb-16 text-[#1d1d1f]">READY TO PICK?</h2>
                             <button onClick={() => navigateTo('#/products')} className="group inline-flex items-center gap-4 text-xl font-medium text-black hover:underline underline-offset-8 decoration-2">
@@ -439,16 +453,7 @@
 
             const videoRef = useRef(null);
             const overlayRef = useRef(null);
-
-            // ====================================================
-            // ✅ 새로 추가된 ref 3개
-            // sectionMetaRef : 섹션 위치를 한 번만 계산해서 저장
-            // targetTimeRef  : scroll이 원하는 비디오 시간을 저장
-            // rafIdRef       : RAF 루프 ID (cleanup에 사용)
-            // ====================================================
             const sectionMetaRef = useRef(null);
-            const targetTimeRef  = useRef(0);
-            const rafIdRef       = useRef(null);
 
             const syncPageWithHash = useCallback(() => {
                 const hash = window.location.hash;
@@ -470,12 +475,12 @@
                 syncPageWithHash();
                 window.addEventListener('hashchange', syncPageWithHash);
 
-                // ====================================================
-                // ✅ STEP 1: scroll 이벤트 — targetTime 변수만 업데이트
-                //    DOM이나 video를 절대 건드리지 않음
-                // ====================================================
+                // ✅ 개선된 scroll 핸들러 — RAF 루프 없음
+                let lastSetTime = -1;
+                const THRESHOLD = 0.04; // 0.04초 미만 변화는 무시 (디코더 과부하 방지)
+
                 const handleScroll = () => {
-                    // 섹션 위치는 처음 한 번만 계산해서 저장 (매번 계산하면 느려짐)
+                    // 섹션 위치는 처음 한 번만 계산
                     if (!sectionMetaRef.current) {
                         const section = document.getElementById('ready-scrolly-section');
                         if (!section) return;
@@ -488,67 +493,36 @@
                     const { offsetTop, scrollHeight } = sectionMetaRef.current;
                     if (scrollHeight <= 0) return;
 
-                    const scrollY = window.pageYOffset;
+                    const progress = Math.max(0, Math.min(1,
+                        (window.pageYOffset - offsetTop) / scrollHeight
+                    ));
 
-                    // 0~1 사이의 스크롤 진행도 계산
-                    const progress = Math.max(0, Math.min(1, (scrollY - offsetTop) / scrollHeight));
-
+                    // ── 비디오 currentTime 업데이트 ──────────────────
                     const video = videoRef.current;
-                    if (video && video.duration) {
-                        // ✅ 비디오 시간 목표값만 저장 (실제 변경은 RAF에서)
-                        targetTimeRef.current = progress * video.duration;
+                    if (video && video.duration && !video.seeking) {
+                        const target = progress * video.duration;
+                        if (Math.abs(target - lastSetTime) >= THRESHOLD) {
+                            video.currentTime = target;
+                            lastSetTime = target;
+                        }
                     }
 
-                    // overlay용 progress도 저장
-                    sectionMetaRef.current.progress = progress;
-                };
-
-                // ====================================================
-                // ✅ STEP 2: RAF 렌더링 루프 — 실제 비디오/오버레이 업데이트
-                //    브라우저가 화면을 그릴 준비가 됐을 때만 실행됨
-                // ====================================================
-                const renderLoop = () => {
-                    const video = videoRef.current;
+                    // ── 텍스트: 70% 도달 시 CSS 클래스만 토글 ────────
                     const overlay = overlayRef.current;
-
-                    if (video) {
-                        // ✅ seeking 중이 아닐 때만 업데이트 (디코더 대기열 방지)
-                        if (!video.seeking) {
-                            video.currentTime = targetTimeRef.current;
-                        }
-                    }
-
-                    // overlay 투명도/위치 업데이트
-                    if (overlay && sectionMetaRef.current) {
-                        const progress = sectionMetaRef.current.progress ?? 0;
-                        if (progress > 0.75) {
-                            const alpha = Math.min(1, (progress - 0.75) * 4);
-                            overlay.style.opacity = alpha;
-                            overlay.style.transform = `translateY(${(1 - alpha) * 20}px)`;
-                            overlay.style.pointerEvents = 'auto';
+                    if (overlay) {
+                        if (progress >= 0.70) {
+                            overlay.classList.add('overlay-visible');
                         } else {
-                            overlay.style.opacity = 0;
-                            overlay.style.transform = 'translateY(20px)';
-                            overlay.style.pointerEvents = 'none';
+                            overlay.classList.remove('overlay-visible');
                         }
                     }
-
-                    // 루프 계속 실행 (ID 저장해야 나중에 정확히 끌 수 있음)
-                    rafIdRef.current = requestAnimationFrame(renderLoop);
                 };
 
                 window.addEventListener('scroll', handleScroll, { passive: true });
 
-                // RAF 루프 시작
-                rafIdRef.current = requestAnimationFrame(renderLoop);
-
-                // ====================================================
-                // ✅ STEP 3: cleanup — 페이지 벗어날 때 루프/이벤트 정리
-                // ====================================================
                 return () => {
                     window.removeEventListener('hashchange', syncPageWithHash);
                     window.removeEventListener('scroll', handleScroll);
-                    cancelAnimationFrame(rafIdRef.current); // RAF 루프 종료
                 };
             }, [syncPageWithHash, isTeaser]);
 

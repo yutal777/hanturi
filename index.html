@@ -616,8 +616,8 @@
                                 </div>
                             </div>
                             <div className="flex flex-col">
-                                {/* 4글자 이상일 경우 줄바꿈이 되지 않도록 폰트 크기 축소 및 whitespace-nowrap 처리 */}
-                                <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight mb-10 leading-tight whitespace-nowrap">{product?.name}</h1>
+                                {/* 제품명의 폰트 굵기를 font-bold(볼드체)로 변경 */}
+                                <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-10 leading-tight whitespace-nowrap">{product?.name}</h1>
                                 <p className="text-xl md:text-2xl text-[#86868b] mb-16 leading-relaxed font-medium break-keep">{product?.desc}</p>
                                 <div className="space-y-8 mb-20 border-t border-gray-100 pt-12 text-sm font-medium">
                                     <div className="flex justify-between items-start gap-12">

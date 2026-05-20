@@ -404,7 +404,7 @@
                 {/* READY TO PICK 세션 (스크롤 비디오 프레임 전환 최적화 시스템 적용, 깃허브 로컬 파일 경로 test.webm으로 바인딩) */}
                 <section id="ready-scrolly-section" className="relative h-[300vh] bg-[#f5f5f7]">
                     <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden bg-[#f5f5f7]">
-                        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full object-cover bg-[#f5f5f7]" />
+                        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full bg-[#f5f5f7]" />
                         
                         <div style={{ position: 'absolute', width: '1px', height: '1px', opacity: 0, overflow: 'hidden', pointerEvents: 'none' }}>
                             <video 
@@ -937,20 +937,11 @@
                     if (isVideoSectionVisible.current) {
                         // 스크롤 프레임 끊김 해결을 위한 60fps 부드러운 시간차 프레임 동기화 연산
                         const target = targetTimeRef.current;
-                        lerpedTimeRef.current += (target - lerpedTimeRef.current) * 0.12; // 0.12 감쇄 비율로 부드러운 스크롤 탐색 실현
+                        lerpedTimeRef.current += (target - lerpedTimeRef.current) * 0.25; // 0.12 감쇄 비율로 부드러운 스크롤 탐색 실현
                         performDraw();
                     }
                     rafIdRef.current = requestAnimationFrame(renderLoop);
                 };
-
-                let rvfcId;
-                if (videoRef.current && 'requestVideoFrameCallback' in HTMLVideoElement.prototype) {
-                    const videoCallback = () => {
-                        if (isVideoSectionVisible.current) performDraw();
-                        rvfcId = videoRef.current.requestVideoFrameCallback(videoCallback);
-                    };
-                    rvfcId = videoRef.current.requestVideoFrameCallback(videoCallback);
-                }
 
                 window.addEventListener('scroll', handleScroll, { passive: true });
                 rafIdRef.current = requestAnimationFrame(renderLoop);
@@ -959,7 +950,6 @@
                     window.removeEventListener('hashchange', syncPageWithHash);
                     window.removeEventListener('scroll', handleScroll);
                     if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
-                    if (rvfcId && videoRef.current) videoRef.current.cancelVideoFrameCallback(rvfcId);
                 };
             }, [syncPageWithHash, page, isTeaser]);
 
@@ -987,7 +977,7 @@
                         scrollHeight: section.offsetHeight - window.innerHeight
                     };
 
-                    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+                    const dpr = Math.min(window.devicePixelRatio || 1, 2);
                     
                     if (widthChanged || heightChanged || canvas.width === 0) {
                         canvas.width = currentWidth * dpr;

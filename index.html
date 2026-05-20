@@ -470,6 +470,27 @@
         // --- 상세 페이지 컴포넌트 ---
         const DetailPage = memo(({ product, navigateTo }) => {
             const [isZoomed, setIsZoomed] = useState(false);
+            const [isMagnified, setIsMagnified] = useState(false);
+
+            // ESC 키 감지 및 body 스크롤 방지 이벤트 리스너 추가
+            useEffect(() => {
+                const handleKeyDown = (e) => {
+                    if (e.key === 'Escape') {
+                        setIsZoomed(false);
+                        setIsMagnified(false);
+                    }
+                };
+                if (isZoomed) {
+                    window.addEventListener('keydown', handleKeyDown);
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    document.body.style.overflow = 'unset';
+                }
+                return () => {
+                    window.removeEventListener('keydown', handleKeyDown);
+                    document.body.style.overflow = 'unset';
+                };
+            }, [isZoomed]);
 
             return (
                 <div className="bg-white min-h-screen pt-40 pb-32 px-6 md:px-24 text-[#1d1d1f]">
@@ -523,15 +544,15 @@
                         </div>
                     </div>
 
-                    {/* 크게 보기 모달 레이어 */}
+                    {/* 크게 보기 모달 레이어 (바깥 영역 클릭 시 닫기 및 ESC 연동) */}
                     {isZoomed && (
                         <div 
-                            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center cursor-zoom-out animate-in fade-in duration-200"
-                            onClick={() => setIsZoomed(false)}
+                            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center animate-in fade-in duration-200"
+                            onClick={() => { setIsZoomed(false); setIsMagnified(false); }}
                         >
                             <button 
                                 className="absolute top-6 right-6 text-white hover:opacity-70 transition p-2 z-[110]"
-                                onClick={(e) => { e.stopPropagation(); setIsZoomed(false); }}
+                                onClick={(e) => { e.stopPropagation(); setIsZoomed(false); setIsMagnified(false); }}
                             >
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -539,13 +560,23 @@
                                 </svg>
                             </button>
                             <div 
-                                className="max-w-[90%] max-h-[90%] flex items-center justify-center p-4 relative"
-                                onClick={(e) => e.stopPropagation()}
+                                className={`flex items-center justify-center p-4 relative transition-all duration-300 ${
+                                    isMagnified ? 'w-full h-full overflow-auto' : 'max-w-[90%] max-h-[90%]'
+                                }`}
+                                onClick={() => { setIsZoomed(false); setIsMagnified(false); }}
                             >
                                 <img 
                                     src={product?.img} 
                                     alt={product?.name} 
-                                    className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl animate-in zoom-in-95 duration-200"
+                                    className={`transition-all duration-300 select-none rounded-2xl shadow-2xl ${
+                                        isMagnified 
+                                            ? 'scale-[2.2] cursor-zoom-out max-w-[90%] max-h-[90%] object-contain' 
+                                            : 'max-w-full max-h-[85vh] object-contain cursor-zoom-in animate-in zoom-in-95 duration-200'
+                                    }`}
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // 모달 닫기 이벤트 방지 및 개별 확대 액션 실행
+                                        setIsMagnified(!isMagnified);
+                                    }}
                                     onError={(e) => { e.target.style.display = 'none'; }}
                                 />
                             </div>

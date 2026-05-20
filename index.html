@@ -977,11 +977,11 @@
                         scrollHeight: section.offsetHeight - window.innerHeight
                     };
 
-                    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                    const dpr = 1;
                     
                     if (widthChanged || heightChanged || canvas.width === 0) {
-                        canvas.width = currentWidth * dpr;
-                        canvas.height = currentHeight * dpr;
+                        canvas.width = currentWidth;
+                        canvas.height = currentHeight;
                         
                         canvas.style.width = currentWidth + 'px';
                         canvas.style.height = currentHeight + 'px';

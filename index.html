@@ -858,7 +858,7 @@
                     const progress = Math.max(0, Math.min(1, (scrollY - offsetTop) / scrollHeight));
                     
                     if (video && video.duration) {
-                        video.currentTime = progress * video.duration;
+                        targetTimeRef.current = progress * video.duration;
                     }
 
                     // overlay 엘리먼트 성능 극대화 직접 매핑 제어
@@ -929,12 +929,23 @@
                     }
                 };
 
+                const renderLoop = () => {
+                    if (isVideoSectionVisible.current) {
+                        // 스크롤 프레임 끊김 해결을 위한 60fps 부드러운 시간차 프레임 동기화 연산
+                        const target = targetTimeRef.current;
+                        lerpedTimeRef.current += (target - lerpedTimeRef.current) * 0.25; // 0.12 감쇄 비율로 부드러운 스크롤 탐색 실현
+                        performDraw();
+                    }
+                    rafIdRef.current = requestAnimationFrame(renderLoop);
+                };
+
                 window.addEventListener('scroll', handleScroll, { passive: true });
                 rafIdRef.current = requestAnimationFrame(renderLoop);
 
                 return () => {
                     window.removeEventListener('hashchange', syncPageWithHash);
                     window.removeEventListener('scroll', handleScroll);
+                    if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
                 };
             }, [syncPageWithHash, page, isTeaser]);
 

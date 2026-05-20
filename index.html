@@ -50,24 +50,6 @@
         }
         .reveal.active { opacity: 1; transform: translateY(0); }
 
-        .scrolly-background-section {
-            height: 400vh;
-            position: relative;
-            z-index: 1;
-        }
-        .sticky-canvas-area {
-            position: sticky;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            background-color: white;
-        }
-
         .popup-overlay {
             animation: appleFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
@@ -77,14 +59,6 @@
         }
 
         ::-webkit-scrollbar { width: 0px; background: transparent; }
-
-        .scrolly-video-canvas {
-            width: 100vw;
-            height: 100vh;
-            object-fit: cover;
-            display: block;
-            will-change: contents;
-        }
 
         /* 티저 전용 페이드인 애니메이션 */
         .teaser-fade-in {
@@ -324,7 +298,7 @@
             </nav>
         ));
 
-        const HomePage = memo(({ canvasRef, videoRef, navigateTo }) => (
+        const HomePage = memo(({ navigateTo }) => (
             <div className="bg-white">
                 <section className="h-screen w-full relative flex flex-col items-center overflow-hidden">
                     <div className="absolute inset-0 bg-[#f5f5f7] z-0"></div>
@@ -336,30 +310,6 @@
                         <Reveal>
                             <p className="text-[#86868b] text-base md:text-xl font-medium tracking-tight uppercase">A choice uniquely mine</p>
                         </Reveal>
-                    </div>
-                </section>
-                
-                <section id="scrolly-section" className="scrolly-background-section bg-white">
-                    <div className="sticky-canvas-area">
-                        <canvas ref={canvasRef} className="scrolly-video-canvas" />
-                        {/* 브라우저가 비디오 엘리먼트를 DOM에서 유실하거나 display: none 상태일 때 
-                          해상도를 240p/360p 등의 최저 품질로 제한하여 디코딩하는 현상을 방지하기 위해,
-                          투명 처리가 된 가상 래퍼를 씌워 실제 렌더 트리 상에 온전히 유지시킵니다.
-                        */}
-                        <div style={{ position: 'absolute', width: '1px', height: '1px', opacity: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-                            <video 
-                                ref={videoRef}
-                                src="Comp 1.webm" 
-                                muted 
-                                playsInline 
-                                webkit-playsinline="true" 
-                                preload="auto"
-                                style={{ width: '100%', height: '100%' }}
-                            />
-                        </div>
-                        <div className="absolute bottom-20 left-0 w-full text-center pointer-events-none">
-                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-[0.6em] animate-pulse drop-shadow-sm">Scroll to interact</p>
-                        </div>
                     </div>
                 </section>
 
@@ -780,19 +730,6 @@
             const [page, setPage] = useState('home');
             const [selectedProduct, setSelectedProduct] = useState(null);
             const [isMenuOpen, setIsMenuOpen] = useState(false);
-            
-            const videoRef = useRef(null);
-            const canvasRef = useRef(null);
-            const targetTimeRef = useRef(0);
-            const lastRenderedTimeRef = useRef(-1);
-            const rafIdRef = useRef(null);
-            const isVideoSectionVisible = useRef(false);
-            const drawRectRef = useRef({ sx: 0, sy: 0, sWidth: 0, sHeight: 0 });
-            const sectionMetrics = useRef({ offsetTop: 0, scrollHeight: 0 });
-
-            // 비디오 데코해상도 가변 감지를 위해 추가하는 추적 참조자
-            const lastVideoWidth = useRef(0);
-            const lastVideoHeight = useRef(0);
 
             const syncPageWithHash = useCallback(() => {
                 const hash = window.location.hash;
@@ -818,179 +755,11 @@
 
                 syncPageWithHash();
                 window.addEventListener('hashchange', syncPageWithHash);
-                
-                const handleScroll = () => {
-                    if (!isVideoSectionVisible.current) return;
-                    const { offsetTop, scrollHeight } = sectionMetrics.current;
-                    if (scrollHeight <= 0) return;
-
-                    const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-                    const scrollPosInSection = scrollY - offsetTop;
-                    const progress = Math.max(0, Math.min(1, scrollPosInSection / scrollHeight));
-                    const video = videoRef.current;
-                    
-                    if (video && video.duration) {
-                        targetTimeRef.current = progress * video.duration;
-                    }
-                };
-
-                const performDraw = () => {
-                    const video = videoRef.current;
-                    const canvas = canvasRef.current;
-                    if (!video || !canvas || video.readyState < 2) return;
-
-                    // 동기화 우회 desynchronized 플래그를 비활성화하여 저가형 모바일 브라우저에서의 일그러짐 및 해상도 임시 보간 버그 방지
-                    const ctx = canvas.getContext('2d', { alpha: false });
-                    
-                    if (!video.seeking) {
-                        const timeToSeek = targetTimeRef.current;
-                        const diff = Math.abs(video.currentTime - timeToSeek);
-
-                        if (diff > 0.033) { 
-                            video.currentTime = timeToSeek;
-                        }
-                        
-                        // 디코딩 단계에서 동적으로 해상도가 갱신되는 크롬/사파리의 가변 해상도 보완 대응
-                        const vWidth = video.videoWidth || 1920;
-                        const vHeight = video.videoHeight || 1080;
-                        
-                        if (vWidth !== lastVideoWidth.current || vHeight !== lastVideoHeight.current) {
-                            lastVideoWidth.current = vWidth;
-                            lastVideoHeight.current = vHeight;
-                            
-                            const cWidth = canvas.width;
-                            const cHeight = canvas.height;
-                            const vRatio = vWidth / vHeight;
-                            const cRatio = cWidth / cHeight;
-                            if (vRatio > cRatio) {
-                                drawRectRef.current = { sHeight: vHeight, sWidth: vHeight * cRatio, sx: (vWidth - (vHeight * cRatio)) / 2, sy: 0 };
-                            } else {
-                                drawRectRef.current = { sWidth: vWidth, sHeight: vWidth / cRatio, sx: 0, sy: (vHeight - (vWidth / cRatio)) / 2 };
-                            }
-                        }
-
-                        if (lastRenderedTimeRef.current !== video.currentTime) {
-                            ctx.imageSmoothingEnabled = true;
-                            ctx.imageSmoothingQuality = 'high';
-                            
-                            const { sx, sy, sWidth, sHeight } = drawRectRef.current;
-                            
-                            // 원본 프레임 크기가 0보다 클 때만 크롭 렌더링, 아닐 경우 풀 프레임 비율 연산 보정
-                            if (sWidth > 0 && sHeight > 0) {
-                                ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
-                            } else {
-                                ctx.drawImage(video, 0, 0, vWidth, vHeight, 0, 0, canvas.width, canvas.height);
-                            }
-                            lastRenderedTimeRef.current = video.currentTime;
-                        }
-                    }
-                };
-
-                const renderLoop = () => {
-                    if (isVideoSectionVisible.current) {
-                        performDraw();
-                    }
-                    rafIdRef.current = requestAnimationFrame(renderLoop);
-                };
-
-                let rvfcId;
-                if (videoRef.current && 'requestVideoFrameCallback' in HTMLVideoElement.prototype) {
-                    const videoCallback = () => {
-                        if (isVideoSectionVisible.current) performDraw();
-                        rvfcId = videoRef.current.requestVideoFrameCallback(videoCallback);
-                    };
-                    rvfcId = videoRef.current.requestVideoFrameCallback(videoCallback);
-                }
-
-                window.addEventListener('scroll', handleScroll, { passive: true });
-                rafIdRef.current = requestAnimationFrame(renderLoop);
 
                 return () => {
                     window.removeEventListener('hashchange', syncPageWithHash);
-                    window.removeEventListener('scroll', handleScroll);
-                    if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
-                    if (rvfcId && videoRef.current) videoRef.current.cancelVideoFrameCallback(rvfcId);
                 };
             }, [syncPageWithHash, page, isTeaser]);
-
-            useEffect(() => {
-                if (isTeaser) return;
-
-                const section = document.getElementById('scrolly-section');
-                const video = videoRef.current;
-                const canvas = canvasRef.current;
-                
-                let lastWidth = window.innerWidth;
-                let lastHeight = window.innerHeight;
-
-                const updateMetrics = () => {
-                    if (!section || !video || !canvas) return;
-                    
-                    const currentWidth = window.innerWidth;
-                    const currentHeight = window.innerHeight;
-                    
-                    // 모바일 브라우저 주소창 스크롤 오프셋 가변 한도(보통 100px 이내) 범위의 미세 스크롤은 리사이징에서 제외하여 버퍼 재생성 lag(튀는 현상) 방지
-                    const widthChanged = currentWidth !== lastWidth;
-                    const heightChanged = Math.abs(currentHeight - lastHeight) > 120; // 120px 이상의 디바이스 화면 리사이징이나 회전에만 물리 버퍼 갱신
-
-                    sectionMetrics.current = {
-                        offsetTop: section.offsetTop,
-                        scrollHeight: section.offsetHeight - window.innerHeight
-                    };
-
-                    // 디바이스 물리적 매칭 해상도 한도를 최대 3 DPR까지 확보하여 Retina 디스플레이 최적 고화질 제공
-                    const dpr = Math.min(window.devicePixelRatio || 1, 3);
-                    
-                    if (widthChanged || heightChanged || canvas.width === 0) {
-                        canvas.width = currentWidth * dpr;
-                        canvas.height = currentHeight * dpr;
-                        
-                        // 물리 크기에 맞추어 캔버스의 인라인 CSS 크기를 강제 동기화하여 고밀도 픽셀 왜곡 및 강제 업스케일링 저화질 현상 해결
-                        canvas.style.width = currentWidth + 'px';
-                        canvas.style.height = currentHeight + 'px';
-                        
-                        lastWidth = currentWidth;
-                        lastHeight = currentHeight;
-                    }
-
-                    // 비디오 너비가 0일 때 예외 방지를 위한 기본 1920x1080 뷰포트 레이아웃 fallback 구조 적용
-                    const vWidth = video.videoWidth || 1920;
-                    const vHeight = video.videoHeight || 1080;
-                    
-                    lastVideoWidth.current = vWidth;
-                    lastVideoHeight.current = vHeight;
-
-                    const cWidth = canvas.width;
-                    const cHeight = canvas.height;
-                    const vRatio = vWidth / vHeight;
-                    const cRatio = cWidth / cHeight;
-                    if (vRatio > cRatio) {
-                        drawRectRef.current = { sHeight: vHeight, sWidth: vHeight * cRatio, sx: (vWidth - (vHeight * cRatio)) / 2, sy: 0 };
-                    } else {
-                        drawRectRef.current = { sWidth: vWidth, sHeight: vWidth / cRatio, sx: 0, sy: (vHeight - (vWidth / cRatio)) / 2 };
-                    }
-                    lastRenderedTimeRef.current = -1;
-                };
-
-                const sectionObserver = new IntersectionObserver(([entry]) => {
-                    isVideoSectionVisible.current = entry.isIntersecting;
-                    if (entry.isIntersecting) {
-                        updateMetrics();
-                        if (video && video.readyState < 2) video.load();
-                    }
-                }, { threshold: 0 });
-
-                if (section) sectionObserver.observe(section);
-                if (video) video.addEventListener('loadedmetadata', updateMetrics);
-                window.addEventListener('resize', updateMetrics);
-                updateMetrics();
-
-                return () => {
-                    if (section) sectionObserver.disconnect();
-                    video?.removeEventListener('loadedmetadata', updateMetrics);
-                    window.removeEventListener('resize', updateMetrics);
-                };
-            }, [page, isTeaser]);
 
             useEffect(() => {
                 document.body.style.overflow = isMenuOpen ? 'hidden' : 'unset';
@@ -1013,7 +782,7 @@
                 <div className="min-h-screen bg-white">
                     <Navbar page={page} navigateTo={navigateTo} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
                     <main>
-                        {page === 'home' && <HomePage canvasRef={canvasRef} videoRef={videoRef} navigateTo={navigateTo} />}
+                        {page === 'home' && <HomePage navigateTo={navigateTo} />}
                         {page === 'products' && <ProductsPage navigateTo={navigateTo} />}
                         {page === 'detail' && <DetailPage product={selectedProduct} navigateTo={navigateTo} />}
                     </main>

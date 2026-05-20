@@ -805,7 +805,7 @@
             const [isMenuOpen, setIsMenuOpen] = useState(false);
 
             const videoRef = useRef(null);
-            const canvasRef = useRef(null);
+            
             const overlayRef = useRef(null);
             
             const targetTimeRef = useRef(0);
@@ -877,62 +877,11 @@
                     }
                 };
 
-                const performDraw = () => {
-                    const video = videoRef.current;
-                    const canvas = canvasRef.current;
-                    if (!video || !canvas || video.readyState < 2) return;
-
-                    // WebM 알파 렌더링 지원 및 고밀도 드로잉을 위해 알파 채널 활성화
-                    const ctx = canvas.getContext('2d', { alpha: true });
-                    
-                    // 스크롤 시 프레임 정체 현상을 극복하기 위한 점진적 탐색(Easing) 수치 대입
-                    const timeToSeek = lerpedTimeRef.current;
-                    const diff = Math.abs(video.currentTime - timeToSeek);
-
-                    // 디코더 락 및 병목 제거를 위해 seeking 중이 아닐 때만 정확히 갱신 요청
-                    if (!video.seeking && diff > 0.01) {
-                        video.currentTime = timeToSeek;
-                    }
-                    
-                    const vWidth = video.videoWidth || 1920;
-                    const vHeight = video.videoHeight || 1080;
-                    
-                    if (vWidth !== lastVideoWidth.current || vHeight !== lastVideoHeight.current) {
-                        lastVideoWidth.current = vWidth;
-                        lastVideoHeight.current = vHeight;
-                        
-                        const cWidth = canvas.width;
-                        const cHeight = canvas.height;
-                        const vRatio = vWidth / vHeight;
-                        const cRatio = cWidth / cHeight;
-                        if (vRatio > cRatio) {
-                            drawRectRef.current = { sHeight: vHeight, sWidth: vHeight * cRatio, sx: (vWidth - (vHeight * cRatio)) / 2, sy: 0 };
-                        } else {
-                            drawRectRef.current = { sWidth: vWidth, sHeight: vWidth / cRatio, sx: 0, sy: (vHeight - (vWidth / cRatio)) / 2 };
-                        }
-                    }
-
-                    // 투명 영역이 검은색으로 도포되는 현상을 막기 위해 드로잉 전 캔버스를 항상 회색(#f5f5f7)으로 채움
-                    ctx.fillStyle = '#f5f5f7';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = 'high';
-                    
-                    const { sx, sy, sWidth, sHeight } = drawRectRef.current;
-                    
-                    // 드로잉 시 캔버스를 초기화하지 않고 직전 프레임 상태를 보존(깜빡임 및 사라짐 완전 제거)
-                    if (sWidth > 0 && sHeight > 0) {
-                        ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
-                    } else {
-                        ctx.drawImage(video, 0, 0, vWidth, vHeight, 0, 0, canvas.width, canvas.height);
-                    }
-                };
+                
 
                 
 
                 window.addEventListener('scroll', handleScroll, { passive: true });
-                rafIdRef.current = requestAnimationFrame(renderLoop);
 
                 return () => {
                     window.removeEventListener('hashchange', syncPageWithHash);

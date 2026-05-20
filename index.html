@@ -27,40 +27,10 @@
         ::-webkit-scrollbar { width: 0px; background: transparent; }
         .teaser-fade-in { animation: teaserFadeIn 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes teaserFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* 텍스트 오버레이 — 기본 상태 (숨김) */
-        #scrolly-overlay {
-            opacity: 0;
-            transform: translateY(32px);
-            pointer-events: none;
-            transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
-                        transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-
-        /* 70% 도달 시 클래스 추가되면 자연스럽게 위로 등장 */
-        #scrolly-overlay.overlay-visible {
-            opacity: 1;
-            transform: translateY(0);
-            pointer-events: auto;
-        }
     </style>
 </head>
 <body>
     <div id="root"></div>
-
-    <!-- GPU 가속 크로마키 필터: 비디오의 검은색 배경만 실시간으로 투명화 처리 -->
-    <svg width="0" height="0" style="position: absolute; pointer-events: none; left: -9999px; top: -9999px;">
-      <defs>
-        <filter id="remove-black">
-          <feColorMatrix type="matrix" values="
-            1 0 0 0 0
-            0 1 0 0 0
-            0 0 1 0 0
-            4 4 4 0 -0.2
-          "/>
-        </filter>
-      </defs>
-    </svg>
 
     <script type="text/babel">
         const { useState, useEffect, useCallback, useRef, memo } = React;
@@ -196,7 +166,7 @@
             </nav>
         ));
 
-        const HomePage = memo(({ videoRef, overlayRef, navigateTo }) => (
+        const HomePage = memo(({ navigateTo }) => (
             <div className="bg-white">
                 <section className="h-screen w-full relative flex flex-col items-center justify-start overflow-hidden bg-[#f5f5f7]">
                     <div className="z-20 text-center pt-48 px-6 md:px-24 max-w-7xl mx-auto">
@@ -258,32 +228,14 @@
                     </div>
                 </section>
 
-                {/* 스크롤 비디오 섹션 */}
-                <section id="ready-scrolly-section" className="relative h-[300vh] bg-[#f5f5f7]">
-                    <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden bg-[#f5f5f7]">
-                        <video
-                            ref={videoRef}
-                            src="test.webm"
-                            muted
-                            playsInline
-                            preload="auto"
-                            className="absolute inset-0 w-full h-full object-contain"
-                            style={{
-                                filter: 'url(#remove-black)',
-                                WebkitFilter: 'url(#remove-black)'
-                            }}
-                        />
-                        <div
-                            ref={overlayRef}
-                            id="scrolly-overlay"
-                            className="z-20 text-center px-6"
-                        >
-                            <h2 className="text-5xl md:text-7xl font-bold tracking-tight mb-16 text-[#1d1d1f] drop-shadow-sm">READY TO PICK?</h2>
-                            <button onClick={() => navigateTo('#/products')} className="group inline-flex items-center gap-4 text-xl font-medium text-black hover:underline underline-offset-8 decoration-2 drop-shadow-sm">
-                                전체 에디션 보기 <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
-                            </button>
-                        </div>
-                    </div>
+                {/* 정적 READY TO PICK 세션 복구 */}
+                <section className="py-64 text-center bg-white px-6 md:px-12 relative z-10">
+                    <Reveal>
+                        <h2 className="text-5xl md:text-7xl font-semibold tracking-tight mb-16 text-[#1d1d1f]">READY TO PICK?</h2>
+                        <button onClick={() => navigateTo('#/products')} className="group inline-flex items-center gap-4 text-xl font-medium text-black hover:underline underline-offset-8 decoration-2">
+                            전체 에디션 보기 <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
+                        </button>
+                    </Reveal>
                 </section>
             </div>
         ));
@@ -470,13 +422,6 @@
             const [selectedProduct, setSelectedProduct] = useState(null);
             const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-            const videoRef = useRef(null);
-            const overlayRef = useRef(null);
-            const sectionMetaRef = useRef(null);
-
-            const targetTimeRef = useRef(0);
-            const lerpedTimeRef = useRef(0); // 부드러운 하드웨어 디코딩 처리를 위한 보간 타임라인 레퍼런스
-
             const syncPageWithHash = useCallback(() => {
                 const hash = window.location.hash;
                 let newPage = 'home';
@@ -496,112 +441,8 @@
                 if (isTeaser) return;
                 syncPageWithHash();
                 window.addEventListener('hashchange', syncPageWithHash);
-
-                // 모바일 Safari 및 브라우저 미디어 디코더 제한 해제(Unlock)용 직접 핸들러
-                const unlockMobileVideo = () => {
-                    const video = videoRef.current;
-                    if (video) {
-                        video.muted = true;
-                        video.playsInline = true;
-                        video.setAttribute('muted', '');
-                        video.setAttribute('playsinline', '');
-                        
-                        // 강제 수동 로드 촉진 후 정지
-                        const playPromise = video.play();
-                        if (playPromise !== undefined) {
-                            playPromise.then(() => {
-                                video.pause();
-                            }).catch(() => {
-                                // 정책에 의해 미디어 제어 거부될 경우 무시
-                            });
-                        }
-                    }
-                    // 리스너 자원 해제
-                    window.removeEventListener('touchstart', unlockMobileVideo);
-                    window.removeEventListener('click', unlockMobileVideo);
-                    window.removeEventListener('scroll', unlockMobileVideo);
-                };
-
-                window.addEventListener('touchstart', unlockMobileVideo, { passive: true });
-                window.addEventListener('click', unlockMobileVideo, { passive: true });
-                window.addEventListener('scroll', unlockMobileVideo, { passive: true });
-
-                const THRESHOLD = 0.008; // 60fps 무손실 제어를 위한 정밀 프레임 오차 데드존 수축 (0.008초)
-
-                const handleScroll = () => {
-                    if (!sectionMetaRef.current) {
-                        const section = document.getElementById('ready-scrolly-section');
-                        if (!section) return;
-                        sectionMetaRef.current = {
-                            offsetTop: section.offsetTop,
-                            scrollHeight: section.offsetHeight - window.innerHeight
-                        };
-                    }
-
-                    const { offsetTop, scrollHeight } = sectionMetaRef.current;
-                    if (scrollHeight <= 0) return;
-
-                    const progress = Math.max(0, Math.min(1,
-                        (window.pageYOffset - offsetTop) / scrollHeight
-                    ));
-
-                    const video = videoRef.current;
-                    if (video) {
-                        // 미디어 준비 상태 검증 및 로드 예외 처리 가공
-                        if (isNaN(video.duration) || video.duration === 0) {
-                            if (video.readyState === 0) {
-                                video.load();
-                            }
-                            return;
-                        }
-
-                        // 다이렉트 프레임 업데이트 대신 보간 타겟 지점으로 부드럽게 시간 설정
-                        targetTimeRef.current = progress * video.duration;
-                    }
-
-                    const overlay = overlayRef.current;
-                    if (overlay) {
-                        if (progress >= 0.70) {
-                            overlay.classList.add('overlay-visible');
-                        } else {
-                            overlay.classList.remove('overlay-visible');
-                        }
-                    }
-                };
-
-                // 스크롤 프레임 끊김 해결을 위한 60fps 보간(Lerping) 루프 설계
-                let rafId;
-                const updateFrame = () => {
-                    const video = videoRef.current;
-                    if (video && video.duration && !isNaN(video.duration)) {
-                        const target = targetTimeRef.current;
-                        const diff = target - lerpedTimeRef.current;
-
-                        // 타겟 오프셋에 부드럽게 근사하도록 감쇄 계수 연산(가중치 0.24 대입)
-                        if (Math.abs(diff) < 0.001) {
-                            lerpedTimeRef.current = target;
-                        } else {
-                            lerpedTimeRef.current += diff * 0.24;
-                        }
-
-                        // 극미세 하드웨어 디코딩 병목 제어 데드존 적용
-                        if (!video.seeking && Math.abs(video.currentTime - lerpedTimeRef.current) > THRESHOLD) {
-                            video.currentTime = lerpedTimeRef.current;
-                        }
-                    }
-                    rafId = requestAnimationFrame(updateFrame);
-                };
-
-                window.addEventListener('scroll', handleScroll, { passive: true });
-                rafId = requestAnimationFrame(updateFrame);
-
                 return () => {
                     window.removeEventListener('hashchange', syncPageWithHash);
-                    window.removeEventListener('scroll', handleScroll);
-                    cancelAnimationFrame(rafId);
-                    window.removeEventListener('touchstart', unlockMobileVideo);
-                    window.removeEventListener('click', unlockMobileVideo);
-                    window.removeEventListener('scroll', unlockMobileVideo);
                 };
             }, [syncPageWithHash, isTeaser]);
 
@@ -618,7 +459,7 @@
                 <div className="min-h-screen bg-white">
                     <Navbar page={page} navigateTo={navigateTo} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
                     <main>
-                        {page === 'home' && <HomePage videoRef={videoRef} overlayRef={overlayRef} navigateTo={navigateTo} />}
+                        {page === 'home' && <HomePage navigateTo={navigateTo} />}
                         {page === 'products' && <ProductsPage navigateTo={navigateTo} />}
                         {page === 'detail' && <DetailPage product={selectedProduct} navigateTo={navigateTo} />}
                     </main>

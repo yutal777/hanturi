@@ -826,7 +826,8 @@
                     const canvas = canvasRef.current;
                     if (!video || !canvas || video.readyState < 2) return;
 
-                    const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+                    // 동기화 우회 desynchronized 플래그를 비활성화하여 저가형 모바일 브라우저에서의 일그러짐 및 해상도 임시 보간 버그 방지
+                    const ctx = canvas.getContext('2d', { alpha: false });
                     
                     if (!video.seeking) {
                         const timeToSeek = targetTimeRef.current;
@@ -837,12 +838,17 @@
                         }
                         
                         if (lastRenderedTimeRef.current !== video.currentTime) {
-                            if (!ctx.imageSmoothingEnabled) {
-                                ctx.imageSmoothingEnabled = true;
-                                ctx.imageSmoothingQuality = 'high';
-                            }
+                            ctx.imageSmoothingEnabled = true;
+                            ctx.imageSmoothingQuality = 'high';
+                            
                             const { sx, sy, sWidth, sHeight } = drawRectRef.current;
-                            ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+                            
+                            // 원본 프레임 크기가 0보다 클 때만 크롭 렌더링, 아닐 경우 풀 프레임 비율 연산 보정
+                            if (sWidth > 0 && sHeight > 0) {
+                                ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+                            } else {
+                                ctx.drawImage(video, 0, 0, video.videoWidth || 1920, video.videoHeight || 1080, 0, 0, canvas.width, canvas.height);
+                            }
                             lastRenderedTimeRef.current = video.currentTime;
                         }
                     }
@@ -906,22 +912,26 @@
                     if (widthChanged || heightChanged || canvas.width === 0) {
                         canvas.width = currentWidth * dpr;
                         canvas.height = currentHeight * dpr;
+                        
+                        // 물리 크기에 맞추어 캔버스의 인라인 CSS 크기를 강제 동기화하여 고밀도 픽셀 왜곡 및 강제 업스케일링 저화질 현상 해결
+                        canvas.style.width = currentWidth + 'px';
+                        canvas.style.height = currentHeight + 'px';
+                        
                         lastWidth = currentWidth;
                         lastHeight = currentHeight;
                     }
 
-                    if (video.videoWidth) {
-                        const vWidth = video.videoWidth;
-                        const vHeight = video.videoHeight;
-                        const cWidth = canvas.width;
-                        const cHeight = canvas.height;
-                        const vRatio = vWidth / vHeight;
-                        const cRatio = cWidth / cHeight;
-                        if (vRatio > cRatio) {
-                            drawRectRef.current = { sHeight: vHeight, sWidth: vHeight * cRatio, sx: (vWidth - (vHeight * cRatio)) / 2, sy: 0 };
-                        } else {
-                            drawRectRef.current = { sWidth: vWidth, sHeight: vWidth / cRatio, sx: 0, sy: (vHeight - (vWidth / cRatio)) / 2 };
-                        }
+                    // 비디오 너비가 0일 때 예외 방지를 위한 기본 1920x1080 뷰포트 레이아웃 fallback 구조 적용
+                    const vWidth = video.videoWidth || 1920;
+                    const vHeight = video.videoHeight || 1080;
+                    const cWidth = canvas.width;
+                    const cHeight = canvas.height;
+                    const vRatio = vWidth / vHeight;
+                    const cRatio = cWidth / cHeight;
+                    if (vRatio > cRatio) {
+                        drawRectRef.current = { sHeight: vHeight, sWidth: vHeight * cRatio, sx: (vWidth - (vHeight * cRatio)) / 2, sy: 0 };
+                    } else {
+                        drawRectRef.current = { sWidth: vWidth, sHeight: vWidth / cRatio, sx: 0, sy: (vHeight - (vWidth / cRatio)) / 2 };
                     }
                     lastRenderedTimeRef.current = -1;
                 };

@@ -12,9 +12,11 @@
     <script src="/_vercel/insights/script.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+    
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
     <style>
         html, body { margin: 0; padding: 0; width: 100%; background-color: white; color: #1d1d1f; -webkit-font-smoothing: antialiased; }
         body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; overflow-x: hidden; }
@@ -87,7 +89,7 @@
         ];
 
         const BUNDLES = [
-            { title: '핸드폰 스티커 (작은 사이즈)', subtitle: 'Phone Sticker', price: '₩2,500', features: ['핸드폰, 스마트 키, 무선이어폰 케이스 등 소형 기기 최적화', '기기 후면에 부착 시 완벽한 핏을 구현하는 미니 사이즈', '우수한 고정력และ 생활 방수 코팅 마감'], tag: 'Small Size', highlight: true },
+            { title: '핸드폰 스티커 (작은 사이즈)', subtitle: 'Phone Sticker', price: '₩2,500', features: ['핸드폰, 스마트 키, 무선이어폰 케이스 등 소형 기기 최적화', '기기 후면에 부착 시 완벽한 핏을 구현하는 미니 사이즈', '우수한 고정력과 생활 방수 코팅 마감'], tag: 'Small Size', highlight: true },
             { title: '컴퓨터 스티커 (큰 사이즈)', subtitle: 'Computer Sticker', price: '₩4,500', features: ['노트북, 데스크톱 본체, 아이패드 및 태블릿 후면용', '큼직한 존재감으로 확실한 개성을 나타내는 라지 사이즈', '자국 없이 깔끔하게 제거되는 이지 오프 특수 재질'], tag: 'Large Size', highlight: false }
         ];
 
@@ -371,7 +373,7 @@
                                     onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUpOrLeave} onMouseLeave={handleMouseUpOrLeave}
                                     onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleMouseUpOrLeave}
                                     onClick={toggleMagnify} onError={(e) => { e.target.style.display = 'none'; }}
-                                tactics/>
+                                />
                             </div>
                         </div>
                     )}

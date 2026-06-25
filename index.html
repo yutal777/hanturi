@@ -35,8 +35,6 @@
     <script type="text/babel">
         const { useState, useEffect, useCallback, useRef, memo } = React;
 
-        const TARGET_TIME = new Date('2026-05-20T20:00:00+09:00').getTime();
-
         const globalObserver = typeof IntersectionObserver !== 'undefined'
             ? new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
@@ -89,7 +87,7 @@
         ];
 
         const BUNDLES = [
-            { title: '핸드폰 스티커 (작은 사이즈)', subtitle: 'Phone Sticker', price: '₩2,500', features: ['핸드폰, 스마트 키, 무선이어폰 케이스 등 소형 기기 최적화', '기기 후면에 부착 시 완벽한 핏을 구현하는 미니 사이즈', '우수한 고정력과 생활 방수 코팅 마감'], tag: 'Small Size', highlight: true },
+            { title: '핸드폰 스티커 (작은 사이즈)', subtitle: 'Phone Sticker', price: '₩2,500', features: ['핸드폰, 스마트 키, 무선이어폰 케이스 등 소형 기기 최적화', '기기 후면에 부착 시 완벽한 핏을 구현하는 미니 사이즈', '우수한 고정력และ 생활 방수 코팅 마감'], tag: 'Small Size', highlight: true },
             { title: '컴퓨터 스티커 (큰 사이즈)', subtitle: 'Computer Sticker', price: '₩4,500', features: ['노트북, 데스크톱 본체, 아이패드 및 태블릿 후면용', '큼직한 존재감으로 확실한 개성을 나타내는 라지 사이즈', '자국 없이 깔끔하게 제거되는 이지 오프 특수 재질'], tag: 'Large Size', highlight: false }
         ];
 
@@ -106,39 +104,6 @@
                 return () => { if (ref.current && globalObserver) globalObserver.unobserve(ref.current); };
             }, []);
             return <div ref={ref} className={`reveal ${className}`}>{children}</div>;
-        });
-
-        const ComingSoonPage = memo(({ onBypass }) => {
-            const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0, expired: false });
-            useEffect(() => {
-                const updateCountdown = () => {
-                    const now = new Date().getTime();
-                    const difference = TARGET_TIME - now;
-                    if (difference <= 0) { setTimeLeft({ hours: 0, minutes: 0, seconds: 0, expired: true }); onBypass(); return; }
-                    setTimeLeft({ hours: Math.floor(difference / (1000 * 60 * 60)), minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)), seconds: Math.floor((difference % (1000 * 60)) / 1000), expired: false });
-                };
-                updateCountdown();
-                const timer = setInterval(updateCountdown, 1000);
-                return () => clearInterval(timer);
-            }, [onBypass]);
-            return (
-                <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 text-center teaser-fade-in bg-white">
-                    <div className="text-[12px] font-semibold tracking-[0.4em] text-gray-300 uppercase mb-8 select-none">PICK BRAND</div>
-                    <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-tight text-[#1d1d1f] select-none mb-6" style={{ letterSpacing: '-0.05em' }}>5월 20일 20:00, 공개.</h1>
-                    {!timeLeft.expired && (
-                        <div className="flex gap-4 md:gap-6 text-3xl md:text-5xl font-bold text-black mb-10 select-none">
-                            <div className="flex flex-col items-center min-w-[60px] md:min-w-[80px]"><span>{String(timeLeft.hours).padStart(2, '0')}</span><span className="text-[9px] md:text-[10px] text-gray-400 uppercase tracking-widest mt-2">Hours</span></div>
-                            <span>:</span>
-                            <div className="flex flex-col items-center min-w-[60px] md:min-w-[80px]"><span>{String(timeLeft.minutes).padStart(2, '0')}</span><span className="text-[9px] md:text-[10px] text-gray-400 uppercase tracking-widest mt-2">Minutes</span></div>
-                            <span>:</span>
-                            <div className="flex flex-col items-center min-w-[60px] md:min-w-[80px]"><span>{String(timeLeft.seconds).padStart(2, '0')}</span><span className="text-[9px] md:text-[10px] text-gray-400 uppercase tracking-widest mt-2">Seconds</span></div>
-                        </div>
-                    )}
-                    <p className="mt-6 text-[#86868b] text-base md:text-lg font-medium tracking-tight uppercase select-none">
-                        A choice uniquely <span onClick={onBypass} className="cursor-default hover:text-black transition-colors duration-300 select-all">mine</span>
-                    </p>
-                </div>
-            );
         });
 
         const Navbar = memo(({ page, navigateTo, isMenuOpen, setIsMenuOpen }) => (
@@ -228,7 +193,6 @@
                     </div>
                 </section>
 
-                {/* 정적 READY TO PICK 세션 복구 */}
                 <section className="py-64 text-center bg-white px-6 md:px-12 relative z-10">
                     <Reveal>
                         <h2 className="text-5xl md:text-7xl font-semibold tracking-tight mb-16 text-[#1d1d1f]">READY TO PICK?</h2>
@@ -407,7 +371,7 @@
                                     onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUpOrLeave} onMouseLeave={handleMouseUpOrLeave}
                                     onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleMouseUpOrLeave}
                                     onClick={toggleMagnify} onError={(e) => { e.target.style.display = 'none'; }}
-                                />
+                                tactics/>
                             </div>
                         </div>
                     )}
@@ -417,7 +381,6 @@
 
         // --- Main App ---
         function App() {
-            const [isTeaser, setIsTeaser] = useState(() => new Date().getTime() < TARGET_TIME);
             const [page, setPage] = useState('home');
             const [selectedProduct, setSelectedProduct] = useState(null);
             const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -438,22 +401,18 @@
             }, []);
 
             useEffect(() => {
-                if (isTeaser) return;
                 syncPageWithHash();
                 window.addEventListener('hashchange', syncPageWithHash);
                 return () => {
                     window.removeEventListener('hashchange', syncPageWithHash);
                 };
-            }, [syncPageWithHash, isTeaser]);
+            }, [syncPageWithHash]);
 
             useEffect(() => {
                 document.body.style.overflow = isMenuOpen ? 'hidden' : 'unset';
             }, [isMenuOpen]);
 
             const navigateTo = useCallback((target) => { window.location.hash = target; setIsMenuOpen(false); }, []);
-            const handleTeaserBypass = useCallback(() => { setIsTeaser(false); }, []);
-
-            if (isTeaser) return <ComingSoonPage onBypass={handleTeaserBypass} />;
 
             return (
                 <div className="min-h-screen bg-white">

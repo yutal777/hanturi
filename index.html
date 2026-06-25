@@ -12,9 +12,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
     
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.25.6/babel.min.js"></script>
     
     <style>
         html, body { margin: 0; padding: 0; width: 100%; background-color: white; color: #1d1d1f; -webkit-font-smoothing: antialiased; }
@@ -33,7 +33,7 @@
 <body>
     <div id="root"></div>
 
-    <script type="text/babel">
+    <script type="text/babel" data-presets="react,es2015">
         // 브라우저 Babel 환경에서 간혹 발생하는 스크립트 변환 충돌 방지를 위해 전역 React 객체 직접 명시
         const globalObserver = typeof IntersectionObserver !== 'undefined'
             ? new IntersectionObserver((entries) => {
